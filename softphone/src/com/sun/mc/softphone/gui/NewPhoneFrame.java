@@ -79,15 +79,14 @@ import com.sun.mc.softphone.gui.plaf.SipCommunicatorColorTheme;
  *
  */
 class NewPhoneFrame
-    extends JFrame
-{
+        extends JFrame {
+
     JPanel dialPanel = new JPanel();
     JButton answerButton = new JButton();
     JButton hangupButton = new JButton();
     GridLayout gridLayout1 = new GridLayout();
     JButton dialButton = new JButton();
     JButton muteButton = new JButton();
-
     JButton lineOneSelected = new JButton();
     JButton lineOneConnected = new JButton();
     JButton lineOneButton = new JButton();
@@ -100,27 +99,28 @@ class NewPhoneFrame
     JButton lineFourSelected = new JButton();
     JButton lineFourConnected = new JButton();
     JButton lineFourButton = new JButton();
-
-    JButton oneButton=new JButton();
-    JButton twoButton=new JButton();
-    JButton threeButton=new JButton();
-    JButton fourButton=new JButton();
-    JButton fiveButton=new JButton();
-    JButton sixButton=new JButton();
-    JButton sevenButton=new JButton();
-    JButton eightButton=new JButton();
-    JButton nineButton=new JButton();
-    JButton starButton=new JButton();
-    JButton zeroButton=new JButton();
-    JButton hashButton=new JButton();
-
+    JButton oneButton = new JButton();
+    JButton twoButton = new JButton();
+    JButton threeButton = new JButton();
+    JButton fourButton = new JButton();
+    JButton fiveButton = new JButton();
+    JButton sixButton = new JButton();
+    JButton sevenButton = new JButton();
+    JButton eightButton = new JButton();
+    JButton nineButton = new JButton();
+    JButton starButton = new JButton();
+    JButton zeroButton = new JButton();
+    JButton hashButton = new JButton();
     JTextField contactBox = new JTextField(15);
-
     JMenuBar jMenuBar1 = new com.sun.mc.softphone.gui.MenuBar();
     JLabel registrationStatus = new JLabel();
-
     JLabel callStatus = new JLabel();
-
+    /**
+     * @author: Damir Kusar
+     * @version: 0.2
+     * Added following line to initiate a new JCheckBox.
+     */
+    JCheckBox wanCheckbox = new JCheckBox();
     private NewGuiManager guiManCallback = null;
 
     public NewPhoneFrame(NewGuiManager guiManCallback) //throws HeadlessException
@@ -131,188 +131,202 @@ class NewPhoneFrame
 
             jbInit();
             Toolkit toolkit = Toolkit.getDefaultToolkit();
-            this.setBounds(0,0,310,470);
+            this.setBounds(0, 0, 310, 470);
             int x = (toolkit.getScreenSize().width - this.getWidth()) / 2;
             int y = (toolkit.getScreenSize().height - this.getHeight()) / 2;
             this.setLocation(x, y);
             this.setResizable(false);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void jbInit() throws Exception
-    {
+    private void jbInit() throws Exception {
         this.getContentPane().setLayout(null);
         this.setJMenuBar(jMenuBar1);
         this.setResizable(true);
         this.setState(Frame.NORMAL);
         this.setTitle("Sun SIP Softphone");
 
-        setupButton(answerButton,"answer.gif");
+        setupButton(answerButton, "answer.gif");
         answerButton.setEnabled(true);
         answerButton.setMnemonic('A');
 
-        setupButton(hangupButton,"hangup.gif");
+        setupButton(hangupButton, "hangup.gif");
         hangupButton.setEnabled(true);
         hangupButton.setMnemonic('H');
 
-        setupButton(dialButton,"dial.gif");
+        setupButton(dialButton, "dial.gif");
         dialButton.setEnabled(true);
         dialButton.setMnemonic('D');
 
-        setupButton(muteButton,"mute.gif");
+        /**
+         * @author: Damir Kusar
+         * @version: 0.2
+         * Added following lines to setup the checkbox.
+         */
+        wanCheckbox.setEnabled(true);
+        wanCheckbox.setMnemonic('W');
+        wanCheckbox.setToolTipText("If you are in your home network, you probably need to activate this checkbox!");
+
+        setupButton(muteButton, "mute.gif");
         muteButton.setEnabled(true);
         muteButton.setMnemonic('M');
 
         contactBox.setEditable(true);
 
         oneButton.setEnabled(true);
-        setupButton(oneButton,"1.gif");
+        setupButton(oneButton, "1.gif");
         twoButton.setEnabled(true);
-        setupButton(twoButton,"2.gif");
+        setupButton(twoButton, "2.gif");
         threeButton.setEnabled(true);
-        setupButton(threeButton,"3.gif");
-           setupLedButton(lineOneSelected,"red.gif");
-           setupLedButton(lineOneConnected,"green.gif");
-           lineOneSelected.setEnabled(true);
-           lineOneConnected.setEnabled(false);
-           lineOneButton.setEnabled(true);
-           lineOneButton.setMnemonic('1');
-           setupButton(lineOneButton,"line1.gif");
+        setupButton(threeButton, "3.gif");
+        setupLedButton(lineOneSelected, "red.gif");
+        setupLedButton(lineOneConnected, "green.gif");
+        lineOneSelected.setEnabled(true);
+        lineOneConnected.setEnabled(false);
+        lineOneButton.setEnabled(true);
+        lineOneButton.setMnemonic('1');
+        setupButton(lineOneButton, "line1.gif");
 
         fourButton.setEnabled(true);
-        setupButton(fourButton,"4.gif");
+        setupButton(fourButton, "4.gif");
         fiveButton.setEnabled(true);
-        setupButton(fiveButton,"5.gif");
+        setupButton(fiveButton, "5.gif");
         sixButton.setEnabled(true);
-        setupButton(sixButton,"6.gif");
-           setupLedButton(lineTwoSelected,"red.gif");
-           setupLedButton(lineTwoConnected,"green.gif");
-           lineTwoSelected.setEnabled(false);
-           lineTwoConnected.setEnabled(false);
-           lineTwoButton.setEnabled(true);
-           lineTwoButton.setMnemonic('2');
-           setupButton(lineTwoButton,"line2.gif");
+        setupButton(sixButton, "6.gif");
+        setupLedButton(lineTwoSelected, "red.gif");
+        setupLedButton(lineTwoConnected, "green.gif");
+        lineTwoSelected.setEnabled(false);
+        lineTwoConnected.setEnabled(false);
+        lineTwoButton.setEnabled(true);
+        lineTwoButton.setMnemonic('2');
+        setupButton(lineTwoButton, "line2.gif");
 
         sevenButton.setEnabled(true);
-        setupButton(sevenButton,"7.gif");
+        setupButton(sevenButton, "7.gif");
         eightButton.setEnabled(true);
-        setupButton(eightButton,"8.gif");
+        setupButton(eightButton, "8.gif");
         nineButton.setEnabled(true);
-        setupButton(nineButton,"9.gif");
-           setupLedButton(lineThreeSelected,"red.gif");
-           setupLedButton(lineThreeConnected,"green.gif");
-           lineThreeSelected.setEnabled(false);
-           lineThreeConnected.setEnabled(false);
-           lineThreeButton.setEnabled(true);
-           lineThreeButton.setMnemonic('3');
-           setupButton(lineThreeButton,"line3.gif");
+        setupButton(nineButton, "9.gif");
+        setupLedButton(lineThreeSelected, "red.gif");
+        setupLedButton(lineThreeConnected, "green.gif");
+        lineThreeSelected.setEnabled(false);
+        lineThreeConnected.setEnabled(false);
+        lineThreeButton.setEnabled(true);
+        lineThreeButton.setMnemonic('3');
+        setupButton(lineThreeButton, "line3.gif");
 
         starButton.setEnabled(true);
-        setupButton(starButton,"star.gif");
+        setupButton(starButton, "star.gif");
         zeroButton.setEnabled(true);
-        setupButton(zeroButton,"0.gif");
+        setupButton(zeroButton, "0.gif");
         hashButton.setEnabled(true);
-        setupButton(hashButton,"hash.gif");
-           setupLedButton(lineFourSelected,"red.gif");
-           setupLedButton(lineFourConnected,"green.gif");
-           lineFourSelected.setEnabled(false);
-           lineFourConnected.setEnabled(false);
-           lineFourButton.setEnabled(true);
-           lineFourButton.setMnemonic('4');
-           setupButton(lineFourButton,"line4.gif");
+        setupButton(hashButton, "hash.gif");
+        setupLedButton(lineFourSelected, "red.gif");
+        setupLedButton(lineFourConnected, "green.gif");
+        lineFourSelected.setEnabled(false);
+        lineFourConnected.setEnabled(false);
+        lineFourButton.setEnabled(true);
+        lineFourButton.setMnemonic('4');
+        setupButton(lineFourButton, "line4.gif");
 
 
         // layout the window
         dialPanel.setLayout(null);
-        dialPanel.setBackground(new Color(180,180,210));
-        contactBox.setBounds(10,5,220,32);
+        dialPanel.setBackground(new Color(180, 180, 210));
+        contactBox.setBounds(10, 5, 220, 32);
         dialPanel.add(contactBox);
-        dialButton.setBounds(235,10,60,22);
+        dialButton.setBounds(235, 10, 50, 22);
         dialPanel.add(dialButton);
 
-        callStatus.setBounds(10,42,250,22);
+        /**
+         * @author: Damir Kusar
+         * @version: 0.2
+         * Added following lines to setup the checkboxes position and place it in the panel.
+         */
+        wanCheckbox.setBounds(290, 16, 10, 10);
+        dialPanel.add(wanCheckbox);
+
+        callStatus.setBounds(10, 42, 250, 22);
         dialPanel.add(callStatus);
 
-        oneButton.setBounds(10,70,60,60);
+        oneButton.setBounds(10, 70, 60, 60);
         dialPanel.add(oneButton);
-        twoButton.setBounds(80,70,60,60);
+        twoButton.setBounds(80, 70, 60, 60);
         dialPanel.add(twoButton);
-        threeButton.setBounds(150,70,60,60);
+        threeButton.setBounds(150, 70, 60, 60);
         dialPanel.add(threeButton);
-        lineOneSelected.setBounds(221,84,8,8);
+        lineOneSelected.setBounds(221, 84, 8, 8);
         dialPanel.add(lineOneSelected);
-        lineOneConnected.setBounds(221,112,8,8);
+        lineOneConnected.setBounds(221, 112, 8, 8);
         dialPanel.add(lineOneConnected);
-        lineOneButton.setBounds(240,75,50,50);
+        lineOneButton.setBounds(240, 75, 50, 50);
         dialPanel.add(lineOneButton);
 
-        fourButton.setBounds(10,140,60,60);
+        fourButton.setBounds(10, 140, 60, 60);
         dialPanel.add(fourButton);
-        fiveButton.setBounds(80,140,60,60);
+        fiveButton.setBounds(80, 140, 60, 60);
         dialPanel.add(fiveButton);
-        sixButton.setBounds(150,140,60,60);
+        sixButton.setBounds(150, 140, 60, 60);
         dialPanel.add(sixButton);
-        lineTwoSelected.setBounds(221,154,8,8);
+        lineTwoSelected.setBounds(221, 154, 8, 8);
         dialPanel.add(lineTwoSelected);
-        lineTwoConnected.setBounds(221,182,8,8);
+        lineTwoConnected.setBounds(221, 182, 8, 8);
         dialPanel.add(lineTwoConnected);
-        lineTwoButton.setBounds(240,145,50,50);
+        lineTwoButton.setBounds(240, 145, 50, 50);
         dialPanel.add(lineTwoButton);
 
-        sevenButton.setBounds(10,210,60,60);
+        sevenButton.setBounds(10, 210, 60, 60);
         dialPanel.add(sevenButton);
-        eightButton.setBounds(80,210,60,60);
+        eightButton.setBounds(80, 210, 60, 60);
         dialPanel.add(eightButton);
-        nineButton.setBounds(150,210,60,60);
+        nineButton.setBounds(150, 210, 60, 60);
         dialPanel.add(nineButton);
-        lineThreeSelected.setBounds(221,224,8,8);
+        lineThreeSelected.setBounds(221, 224, 8, 8);
         dialPanel.add(lineThreeSelected);
-        lineThreeConnected.setBounds(221,252,8,8);
+        lineThreeConnected.setBounds(221, 252, 8, 8);
         dialPanel.add(lineThreeConnected);
-        lineThreeButton.setBounds(240,215,50,50);
+        lineThreeButton.setBounds(240, 215, 50, 50);
         dialPanel.add(lineThreeButton);
 
-        starButton.setBounds(10,280,60,60);
+        starButton.setBounds(10, 280, 60, 60);
         dialPanel.add(starButton);
-        zeroButton.setBounds(80,280,60,60);
+        zeroButton.setBounds(80, 280, 60, 60);
         dialPanel.add(zeroButton);
-        hashButton.setBounds(150,280,60,60);
+        hashButton.setBounds(150, 280, 60, 60);
         dialPanel.add(hashButton);
-        lineFourSelected.setBounds(221,294,8,8);
+        lineFourSelected.setBounds(221, 294, 8, 8);
         dialPanel.add(lineFourSelected);
-        lineFourConnected.setBounds(221,322,8,8);
+        lineFourConnected.setBounds(221, 322, 8, 8);
         dialPanel.add(lineFourConnected);
-        lineFourButton.setBounds(240,285,50,50);
+        lineFourButton.setBounds(240, 285, 50, 50);
         dialPanel.add(lineFourButton);
 
 
-        answerButton.setBounds(10,355,110,40);
+        answerButton.setBounds(10, 355, 110, 40);
         dialPanel.add(answerButton);
 
-        muteButton.setBounds(130,355,40,40);
+        muteButton.setBounds(130, 355, 40, 40);
         dialPanel.add(muteButton);
 
-        hangupButton.setBounds(180,355,110,40);
+        hangupButton.setBounds(180, 355, 110, 40);
         dialPanel.add(hangupButton);
 
 
-        registrationStatus.setBounds(10,398,250,22);
+        registrationStatus.setBounds(10, 398, 250, 22);
         dialPanel.add(registrationStatus);
-       
-        dialPanel.setBounds(0,0,310,430);
+
+        dialPanel.setBounds(0, 0, 310, 430);
         this.getContentPane().add(dialPanel);
 
         registrationStatus.setForeground(SipCommunicatorColorTheme.NOT_REGISTERED);
         registrationStatus.setText("Not Registered");
     }
 
-    private void setupButton(JButton button,String image) {
-        try
-        {
-            button.setSize(50,50);
+    private void setupButton(JButton button, String image) {
+        try {
+            button.setSize(50, 50);
             button.setBackground(Color.white);
             button.setForeground(Color.white);
             button.setBorderPainted(false);
@@ -320,28 +334,27 @@ class NewPhoneFrame
 
             URL iURL = Utils.getResource(image);
             if (iURL != null) {
-                ImageIcon iIcon=new ImageIcon(iURL);
+                ImageIcon iIcon = new ImageIcon(iURL);
                 button.setIcon(iIcon);
-                button.setSize(iIcon.getIconWidth(),iIcon.getIconHeight());
+                button.setSize(iIcon.getIconWidth(), iIcon.getIconHeight());
             } else {
-                System.out.println("cannot load "+image);
+                System.out.println("cannot load " + image);
                 button.setText("?");
             }
-            URL pURL = Utils.getResource("pressed-"+image);
+            URL pURL = Utils.getResource("pressed-" + image);
             if (pURL != null) {
-                ImageIcon pIcon=new ImageIcon(pURL);
+                ImageIcon pIcon = new ImageIcon(pURL);
                 button.setPressedIcon(pIcon);
             }
         } catch (Exception e) {
-            System.out.println("cannot load "+image+": "+e.getMessage());
+            System.out.println("cannot load " + image + ": " + e.getMessage());
             button.setText("?");
         }
     }
 
-    private void setupLedButton(JButton button,String image) {
-        try
-        {
-            button.setSize(8,8);
+    private void setupLedButton(JButton button, String image) {
+        try {
+            button.setSize(8, 8);
             button.setBackground(Color.white);
             button.setForeground(Color.white);
             button.setBorderPainted(false);
@@ -349,119 +362,153 @@ class NewPhoneFrame
 
             URL iURL = Utils.getResource(image);
             if (iURL != null) {
-                ImageIcon iIcon=new ImageIcon(iURL);
+                ImageIcon iIcon = new ImageIcon(iURL);
                 button.setIcon(iIcon);
-                button.setSize(iIcon.getIconWidth(),iIcon.getIconHeight());
+                button.setSize(iIcon.getIconWidth(), iIcon.getIconHeight());
             } else {
-                System.out.println("cannot load "+image);
+                System.out.println("cannot load " + image);
                 button.setText("?");
             }
             URL pURL = Utils.getResource("gray.gif");
             if (pURL != null) {
-                ImageIcon pIcon=new ImageIcon(pURL);
+                ImageIcon pIcon = new ImageIcon(pURL);
                 button.setDisabledIcon(pIcon);
             }
         } catch (Exception e) {
-            System.out.println("cannot load "+image+": "+e.getMessage());
+            System.out.println("cannot load " + image + ": " + e.getMessage());
             button.setText("?");
         }
     }
 
-    public void setLineSelected(int line,boolean state) {
-        switch(line) {
-            case 0: lineOneSelected.setEnabled(state); break;
-            case 1: lineTwoSelected.setEnabled(state); break;
-            case 2: lineThreeSelected.setEnabled(state); break;
-            case 3: lineFourSelected.setEnabled(state); break;
-            default: return;
+    public void setLineSelected(int line, boolean state) {
+        switch (line) {
+            case 0:
+                lineOneSelected.setEnabled(state);
+                break;
+            case 1:
+                lineTwoSelected.setEnabled(state);
+                break;
+            case 2:
+                lineThreeSelected.setEnabled(state);
+                break;
+            case 3:
+                lineFourSelected.setEnabled(state);
+                break;
+            default:
+                return;
         }
     }
 
-    public void setLineConnected(int line,boolean state) {
-        switch(line) {
-            case 0: lineOneConnected.setEnabled(state); break;
-            case 1: lineTwoConnected.setEnabled(state); break;
-            case 2: lineThreeConnected.setEnabled(state); break;
-            case 3: lineFourConnected.setEnabled(state); break;
-            default: return;
+    public void setLineConnected(int line, boolean state) {
+        switch (line) {
+            case 0:
+                lineOneConnected.setEnabled(state);
+                break;
+            case 1:
+                lineTwoConnected.setEnabled(state);
+                break;
+            case 2:
+                lineThreeConnected.setEnabled(state);
+                break;
+            case 3:
+                lineFourConnected.setEnabled(state);
+                break;
+            default:
+                return;
         }
-        if(flasher[line]!=null) {
+        if (flasher[line] != null) {
             flasher[line].stopFlashing();
-            flasher[line]=null;
+            flasher[line] = null;
         }
     }
 
     public boolean isLineConnected(int line) {
-        boolean result=false;
-        switch(line) {
-            case 0: result = lineOneConnected.isEnabled(); break;
-            case 1: result = lineTwoConnected.isEnabled(); break;
-            case 2: result = lineThreeConnected.isEnabled(); break;
-            case 3: result = lineFourConnected.isEnabled(); break;
-            default: return false;
+        boolean result = false;
+        switch (line) {
+            case 0:
+                result = lineOneConnected.isEnabled();
+                break;
+            case 1:
+                result = lineTwoConnected.isEnabled();
+                break;
+            case 2:
+                result = lineThreeConnected.isEnabled();
+                break;
+            case 3:
+                result = lineFourConnected.isEnabled();
+                break;
+            default:
+                return false;
         }
         return result;
     }
-
-    public Flasher[] flasher=new Flasher[4];
+    public Flasher[] flasher = new Flasher[4];
 
     public void setLineAlerting(int line) {
-        switch(line) {
-            case 0: flasher[line]=new Flasher(lineOneConnected); break;
-            case 1: flasher[line]=new Flasher(lineTwoConnected); break;
-            case 2: flasher[line]=new Flasher(lineThreeConnected); break;
-            case 3: flasher[line]=new Flasher(lineFourConnected); break;
-            default: return;
+        switch (line) {
+            case 0:
+                flasher[line] = new Flasher(lineOneConnected);
+                break;
+            case 1:
+                flasher[line] = new Flasher(lineTwoConnected);
+                break;
+            case 2:
+                flasher[line] = new Flasher(lineThreeConnected);
+                break;
+            case 3:
+                flasher[line] = new Flasher(lineFourConnected);
+                break;
+            default:
+                return;
         }
     }
 
     public int getSelectedLine() {
-       int i=-1;
-       if(lineOneSelected.isEnabled()) {
-           i=0;
-       } else if(lineTwoSelected.isEnabled()) {
-           i=1;
-       } else if(lineThreeSelected.isEnabled()) {
-           i=2;
-       } else if(lineFourSelected.isEnabled()) {
-           i=3;
-       }
-       return i;
+        int i = -1;
+        if (lineOneSelected.isEnabled()) {
+            i = 0;
+        } else if (lineTwoSelected.isEnabled()) {
+            i = 1;
+        } else if (lineThreeSelected.isEnabled()) {
+            i = 2;
+        } else if (lineFourSelected.isEnabled()) {
+            i = 3;
+        }
+        return i;
     }
 
     public void muted(boolean isMuted) {
-        if(isMuted) {
-            setupButton(muteButton,"muted.gif");
+        if (isMuted) {
+            setupButton(muteButton, "muted.gif");
         } else {
-            setupButton(muteButton,"mute.gif");
+            setupButton(muteButton, "mute.gif");
         }
     }
 
     class Flasher extends Thread {
+
         JButton button;
-        boolean flash=true;
+        boolean flash = true;
+
         Flasher(JButton button) {
-            this.button=button;
+            this.button = button;
             this.start();
         }
 
         public void stopFlashing() {
-            flash=false;
+            flash = false;
         }
 
         public void run() {
-            boolean state=true;
-            while(flash) {
+            boolean state = true;
+            while (flash) {
                 button.setEnabled(state);
                 try {
                     sleep(250);
-                } catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                 }
-                state=!state;
+                state = !state;
             }
         }
-
-      
     }
-
 }

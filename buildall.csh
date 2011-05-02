@@ -8,7 +8,6 @@ cd ../voip
 ant clean
 cd ../softphone
 ant clean
-java -version
 cd ../voicelib
 ant clean
 cd ../stun

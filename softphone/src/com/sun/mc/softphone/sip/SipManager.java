@@ -71,6 +71,7 @@ import com.sun.mc.softphone.common.*;
 import com.sun.mc.softphone.media.MediaManager;
 import com.sun.mc.softphone.sip.event.*;
 import com.sun.mc.softphone.sip.security.*;
+import com.sun.stun.Handler;
 
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -93,19 +94,17 @@ import com.sun.voip.Logger;
  * @version 1.0
  */
 public class SipManager
-    implements SipListener
-{
+        implements SipListener {
+
     /**
      * Specifies the number of retries that should be attempted when deleting
      * a sipProvider
      */
-    private static final int  RETRY_OBJECT_DELETES       = 10;
+    private static final int RETRY_OBJECT_DELETES = 10;
     /**
      * Specifies the time to wait before retrying delete of a sipProvider.
      */
     private static final long RETRY_OBJECT_DELETES_AFTER = 500;
-
-
     private static final Console console = Console.getConsole(SipManager.class);
     private static final String DEFAULT_TRANSPORT = "udp";
     //jain-sip objects - package accessibility as they should be
@@ -115,249 +114,222 @@ public class SipManager
      * Message and Header Factories.
      */
     SipFactory sipFactory;
-
     /**
      * The AddressFactory used to create URLs ans Address objects.
      */
     AddressFactory addressFactory;
-
     /**
      * The HeaderFactory used to create SIP message headers.
      */
     HeaderFactory headerFactory;
-
     /**
      * The Message Factory used to create SIP messages.
      */
     MessageFactory messageFactory;
-
     /**
      * The sipStack instance that handles SIP communications.
      */
     SipStack sipStack;
-
     /**
      * The default (and currently the only) SIP listening point of the
      * application.
      */
     ListeningPoint listeningPoint;
-
     /**
      * The JAIN SIP SipProvider instance.
      */
     SipProvider sipProvider;
-
     /**
      * An instance used to provide user credentials
      */
     private SecurityAuthority securityAuthority = null;
-
-
     /**
      * Used for the contact header to provide firewall support.
      */
     private InetSocketAddress publicIsa = null;
-
     private DelayedInviteProcessor delayedInviteProcessor = null;
-
     //properties
     private String sipStackPath = "gov.nist";
-
     protected String currentlyUsedURI = null;
-
     private String displayName = null;
     private String transport = DEFAULT_TRANSPORT;
     private int localPort = -1;
     private int registrationsExpiration = -1;
     private String registrarTransport = null;
-
     //mandatory stack properties
     private String stackAddress = null;
-
     //Prebuilt Message headers
     private FromHeader fromHeader = null;
     private ContactHeader contactHeader = null;
     private ArrayList viaHeaders = null;
-    private static final int  MAX_FORWARDS = 70;
+    private static final int MAX_FORWARDS = 70;
     private MaxForwardsHeader maxForwardsHeader = null;
     private long registrationTransaction = -1;
     private ArrayList listeners = new ArrayList();
-
     private String registrarAddress = null;
     private int registrarPort = 5060;
     private boolean registrarIsStunServer;
-
     //XxxProcessing managers
     /**
      * The instance that handles all registration associated activity such as
      * registering, unregistering and keeping track of expirations.
      */
     RegisterProcessing registerProcessing = null;
-
     /**
      * The instance that handles all call associated activity such as
      * establishing, managing, and terminating calls.
      */
     CallProcessing callProcessing = null;
-
     /**
      * The instance that handles incoming/outgoing REFER requests.
      */
     TransferProcessing transferProcessing = null;
-
     /**
      * Authentication manager.
      */
     SipSecurityManager sipSecurityManager = null;
-
     private boolean isStarted = false;
-
     private DatagramSocket socket;
-
     private boolean started;
-
     private SipCommunicator sipCommunicator;
-
     private MediaManager mediaManager;
-
     private static int stackInstance = 0;
-
     private static Object stackNameLock = new Object();
 
-    public SipManager(SipCommunicator sipCommunicator, 
-	    MediaManager mediaManager, String registrarAddress) {
+    public SipManager(SipCommunicator sipCommunicator,
+            MediaManager mediaManager, String registrarAddress) {
 
-	this.sipCommunicator = sipCommunicator;
-	this.mediaManager = mediaManager;
-	this.registrarAddress = registrarAddress;
+        this.sipCommunicator = sipCommunicator;
+        this.mediaManager = mediaManager;
+        this.registrarAddress = registrarAddress;
 
-	String stackName;
+        String stackName;
 
-	synchronized (stackNameLock) {
-	    stackName = "sip-Communicator." + stackInstance++;
-	}
+        synchronized (stackNameLock) {
+            stackName = "sip-Communicator." + stackInstance++;
+        }
 
-	System.setProperty("javax.sip.STACK_NAME", stackName);
+        System.setProperty("javax.sip.STACK_NAME", stackName);
 
-	//Logger.forcePrintln("Stack name is " + stackName + " IP_ADDRESS "
-	//    + System.getProperty("javax.sip.IP_ADDRESS"));
+        //Logger.forcePrintln("Stack name is " + stackName + " IP_ADDRESS "
+        //    + System.getProperty("javax.sip.IP_ADDRESS"));
 
-	initRegistrarAddress();
+        initRegistrarAddress();
 
-        registerProcessing  = new RegisterProcessing(this);
-        callProcessing      = new CallProcessing(this);
-        sipSecurityManager  = new SipSecurityManager();
+        registerProcessing = new RegisterProcessing(this);
+        callProcessing = new CallProcessing(this);
+        sipSecurityManager = new SipSecurityManager();
     }
 
     private void initRegistrarAddress() {
-	if (registrarAddress == null || registrarAddress.length() == 0) {
+        if (registrarAddress == null || registrarAddress.length() == 0) {
             registrarAddress = Utils.getPreference(
-                "com.sun.mc.softphone.sip.REGISTRAR_ADDRESS");
+                    "com.sun.mc.softphone.sip.REGISTRAR_ADDRESS");
 
             if (registrarAddress == null || registrarAddress.length() == 0) {
-	        noStunRegistrar();
-	        return;
-	    }
-	}
+                noStunRegistrar();
+                return;
+            }
+        }
 
         String registrarPort = Utils.getPreference(
-            "com.sun.mc.softphone.sip.REGISTRAR_UDP_PORT");
+                "com.sun.mc.softphone.sip.REGISTRAR_UDP_PORT");
 
         if (registrarPort != null && registrarPort.length() > 0) {
-	    try {
-		this.registrarPort = Integer.parseInt(registrarPort);
-	    } catch (NumberFormatException e) {
-		Logger.println("Invalid registrar port " + registrarPort
-		    + " defaulting to " + this.registrarPort);
-	    }
-	}
+            try {
+                this.registrarPort = Integer.parseInt(registrarPort);
+            } catch (NumberFormatException e) {
+                Logger.println("Invalid registrar port " + registrarPort
+                        + " defaulting to " + this.registrarPort);
+            }
+        }
 
-	String s = registrarAddress;
+        String s = registrarAddress;
 
         int ix = s.indexOf(";sip-stun");
 
-	if (ix < 0) {
-	    noStunRegistrar();
-	    return;
-	}
+        if (ix < 0) {
+            noStunRegistrar();
+            return;
+        }
 
-	registrarIsStunServer = true;
+        registrarIsStunServer = true;
 
-	s = s.substring(0, ix);
+        s = s.substring(0, ix);
 
-	try {
+        try {
             registrarAddress = InetAddress.getByName(s).getHostAddress();
         } catch (UnknownHostException e) {
             Logger.println("No Registrar:  Unable to resolve host " + registrarAddress);
-	    noStunRegistrar();
-	    return;
+            noStunRegistrar();
+            return;
         }
 
-	if ((ix = s.indexOf(":")) >= 0) {
-	    s = s.substring(ix + 1);
+        if ((ix = s.indexOf(":")) >= 0) {
+            s = s.substring(ix + 1);
 
-	    try {
-		this.registrarPort = Integer.parseInt(s);
-	    } catch (NumberFormatException e) {
-		Logger.println("Invalid registrar port " + s
-		    + " defaulting to " + this.registrarPort);
-	    }
-	}
+            try {
+                this.registrarPort = Integer.parseInt(s);
+            } catch (NumberFormatException e) {
+                Logger.println("Invalid registrar port " + s
+                        + " defaulting to " + this.registrarPort);
+            }
+        }
     }
 
     private void noStunRegistrar() {
-	Logger.println("No STUN Registrar specified!");
+        Logger.println("No STUN Registrar specified!");
         Logger.println("IF YOU ARE BEHIND A FIREWALL OR NAT,");
         Logger.println(
-            "YOU MUST APPEND ;sip-stun TO THE SIP REGISTRAR ADDRESS ");
+                "YOU MUST APPEND ;sip-stun TO THE SIP REGISTRAR ADDRESS ");
         Logger.println(
-            "AND THE REGISTRAR MUST ALSO BE A STUN SERVER!");
+                "AND THE REGISTRAR MUST ALSO BE A STUN SERVER!");
     }
 
     public String getRegistrarAddress() {
-	return registrarAddress;
+        return registrarAddress;
     }
 
     public boolean isRegistrarStunServer() {
-	return registrarIsStunServer;
+        return registrarIsStunServer;
     }
 
     public int getRegistrarPort() {
-	return registrarPort;
+        return registrarPort;
     }
 
     public void reRegister(String registrarAddress,
-	    String registrarPort) throws CommunicationsException {
+            String registrarPort) throws CommunicationsException {
 
-	endAllCalls();
+        endAllCalls();
 
-	String ipAddress;
+        String ipAddress;
 
-	String s = registrarAddress;
+        String s = registrarAddress;
 
-	int ix = s.indexOf(";");
+        int ix = s.indexOf(";");
 
-	if (ix >= 0) {
-	    s = s.substring(0, ix);
-	}
+        if (ix >= 0) {
+            s = s.substring(0, ix);
+        }
 
-	try {
-	    InetAddress ia = InetAddress.getByName(s);
-	    ipAddress = ia.getHostAddress();
-	} catch (UnknownHostException e) {
-	    Logger.println("reRegister unable to get registrar:  "
-		+ e.getMessage());
-	    return;
-	}
+        try {
+            InetAddress ia = InetAddress.getByName(s);
+            ipAddress = ia.getHostAddress();
+        } catch (UnknownHostException e) {
+            Logger.println("reRegister unable to get registrar:  "
+                    + e.getMessage());
+            return;
+        }
 
-	System.setProperty("com.sun.mc.softphone.sip.REGISTRAR_ADDRESS",
-            ipAddress);
+        System.setProperty("com.sun.mc.softphone.sip.REGISTRAR_ADDRESS",
+                ipAddress);
 
         System.setProperty("com.sun.mc.softphone.sip.REGISTRAR_UDP_PORT",
-            registrarPort);
+                registrarPort);
 
         Logger.println("Setting registrar to " + ipAddress + ":"
-            + registrarPort);
+                + registrarPort);
 
         registerProcessing = new RegisterProcessing(this);
 
@@ -365,11 +337,11 @@ public class SipManager
     }
 
     public void setRemoteSdpDescription(String sdp) {
-	mediaManager.setRemoteSdpData(sdp);
+        mediaManager.setRemoteSdpData(sdp);
     }
 
     public String getAuthenticationUserName() {
-	return sipCommunicator.getAuthenticationUserName();
+        return sipCommunicator.getAuthenticationUserName();
     }
 
     /**
@@ -380,13 +352,12 @@ public class SipManager
      * @throws CommunicationsException if an axception should occur during the
      * initialization process
      */
-    public void start() throws CommunicationsException
-    {
+    public void start() throws CommunicationsException {
         try {
             console.logEntry();
-	
-	    localPort = findFreePort(
-		Utils.getPreference("com.sun.mc.softphone.sip.PREFERRED_LOCAL_PORT"));
+
+            localPort = findFreePort(
+                    Utils.getPreference("com.sun.mc.softphone.sip.PREFERRED_LOCAL_PORT"));
 
             if (console.isDebugEnabled()) {
                 console.debug("preferred local port=" + localPort);
@@ -399,103 +370,101 @@ public class SipManager
                 addressFactory = sipFactory.createAddressFactory();
                 headerFactory = sipFactory.createHeaderFactory();
                 messageFactory = sipFactory.createMessageFactory();
-            }
-            catch (PeerUnavailableException ex) {
+            } catch (PeerUnavailableException ex) {
                 console.error("Could not could not create factories!", ex);
                 throw new CommunicationsException(
-                    "Could not create factories!",
-                    ex
-                    );
+                        "Could not create factories!",
+                        ex);
             }
 
             try {
                 sipStack = sipFactory.createSipStack(System.getProperties());
 
-	        //Logger.forcePrintln("SipStack is " + sipStack);
-            }
-            catch (PeerUnavailableException ex) {
+                //Logger.forcePrintln("SipStack is " + sipStack);
+            } catch (PeerUnavailableException ex) {
                 console.error("Could not could not create SipStack!", ex);
                 throw new CommunicationsException(
-                    "Could not create SipStack!\n"
-                    +
-                    "A possible reason is an incorrect OUTBOUND_PROXY property\n"
-                    + "(Syntax:<proxy_address:port/transport>)",
-                    ex
-                    );
+                        "Could not create SipStack!\n"
+                        + "A possible reason is an incorrect OUTBOUND_PROXY property\n"
+                        + "(Syntax:<proxy_address:port/transport>)",
+                        ex);
             }
             try {
                 boolean successfullyBound = false;
                 while (!successfullyBound) {
                     try {
-			InetAddress privateLocalHost = 
-			    SipCommunicator.getPrivateLocalAddress();
+                        InetAddress privateLocalHost =
+                                SipCommunicator.getPrivateLocalAddress();
 
                         listeningPoint = sipStack.createListeningPoint(
-                            privateLocalHost.getHostAddress(), localPort, 
-			    transport);
+                                privateLocalHost.getHostAddress(), localPort,
+                                transport);
 
-			publicIsa = listeningPoint.getPublicAddress();
+                        publicIsa = listeningPoint.getPublicAddress();
 
-			Logger.println("private address is " 
-			    + privateLocalHost.getHostAddress() + ":" 
-			    + localPort + " publicIsa is " + publicIsa);
-                    }
-                    catch (InvalidArgumentException ex) {
+                        Logger.println("private address is "
+                                + privateLocalHost.getHostAddress() + ":"
+                                + localPort + " publicIsa is " + publicIsa);
+
+
+                        /**
+                         * @author: Damir Kusar
+                         * @version: 0.2
+                         * Added following two lines to set the Wan and Public Socket in the Handler class.
+                         */
+                        Handler.setWanSocket(Handler.findWanIP(), Handler.getLocalPort());
+                        Handler.setPublicSocket(publicIsa.getAddress(), publicIsa.getPort());
+
+
+                    } catch (InvalidArgumentException ex) {
                         //choose another port between 1024 and 65000
-                        Logger.println("error binding stack to port " + localPort 
-			    + ". Will try another port. " + ex.getMessage());
+                        Logger.println("error binding stack to port " + localPort
+                                + ". Will try another port. " + ex.getMessage());
                         Logger.exception("Error assigning address", ex);
-                        
-                        localPort = (int) ( (65000 - 1024) * Math.random()) +
-                            1024;
+
+                        localPort = (int) ((65000 - 1024) * Math.random())
+                                + 1024;
                         continue;
+                    } catch (IOException e) {
+                        SipCommunicator.softphoneProblem("Network Problem."
+                                + " Unable to get public address:  "
+                                + e.getMessage());
                     }
-		    catch (IOException e) {
-			SipCommunicator.softphoneProblem("Network Problem."
-			    + " Unable to get public address:  " 
-			    + e.getMessage());
-		    }
                     successfullyBound = true;
                 }
-            }
-            catch (TransportNotSupportedException ex) {
+            } catch (TransportNotSupportedException ex) {
                 console.error(
-                    "Transport " + transport
-                    +
-                    " is not suppported by the stack!\n Try specifying another"
-                    + " transport in SipCommunicator property files.\n",
-                    ex);
+                        "Transport " + transport
+                        + " is not suppported by the stack!\n Try specifying another"
+                        + " transport in SipCommunicator property files.\n",
+                        ex);
                 throw new CommunicationsException(
-                    "Transport " + transport
-                    +
-                    " is not suppported by the stack!\n Try specifying another"
-                    + " transport in SipCommunicator property files.\n",
-                    ex);
+                        "Transport " + transport
+                        + " is not suppported by the stack!\n Try specifying another"
+                        + " transport in SipCommunicator property files.\n",
+                        ex);
             }
             try {
                 sipProvider = sipStack.createSipProvider(listeningPoint);
-            }
-            catch (ObjectInUseException ex) {
+            } catch (ObjectInUseException ex) {
                 console.error("Could not could not create factories!\n", ex);
                 throw new CommunicationsException(
-                    "Could not could not create factories!\n", ex);
+                        "Could not could not create factories!\n", ex);
             }
             try {
                 sipProvider.addSipListener(this);
-            }
-            catch (TooManyListenersException exc) {
+            } catch (TooManyListenersException exc) {
                 console.error(
-                    "Could not register SipManager as a sip listener!", exc);
+                        "Could not register SipManager as a sip listener!", exc);
                 throw new CommunicationsException(
-                    "Could not register SipManager as a sip listener!", exc);
+                        "Could not register SipManager as a sip listener!", exc);
             }
 
             // we should have a security authority to be able to handle
             // authentication
-            if(sipSecurityManager.getSecurityAuthority() == null)
-            {
+            if (sipSecurityManager.getSecurityAuthority() == null) {
                 throw new CommunicationsException(
-                    "No SecurityAuthority was provided to SipManager!");
+                        "No SecurityAuthority was provided to SipManager!");
             }
             sipSecurityManager.setHeaderFactory(headerFactory);
             sipSecurityManager.setTransactionCreator(sipProvider);
@@ -509,8 +478,7 @@ public class SipManager
             viaHeaders = null;
             maxForwardsHeader = null;
             isStarted = true;
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -521,58 +489,55 @@ public class SipManager
      * when properties are changed and should be reread by the stack.
      * @throws CommunicationsException
      */
-    public void stop() throws CommunicationsException
-    {
-        try
-        {
+    public void stop() throws CommunicationsException {
+        try {
             console.logEntry();
 
-	    if (sipStack == null) {
-		return;
-	    }
-
-	    int tries;
-
-if (false) {
-	    /*
-	     * This seems to timeout for some reason
-	     * It's not really necessary since we are exiting anyway.
-	     */
-
-            //Delete SipProvider
-            for (tries = 0; tries < RETRY_OBJECT_DELETES; tries++) {
-                try {
-                    sipStack.deleteSipProvider(sipProvider);
-                }
-                catch (ObjectInUseException ex) {
-                    // Logger.println("Retrying delete of riSipProvider!");
-                    sleep(RETRY_OBJECT_DELETES_AFTER);
-                    continue;
-                }
-                break;
+            if (sipStack == null) {
+                return;
             }
-            if (tries >= RETRY_OBJECT_DELETES)
-                throw new CommunicationsException(
-                    "Failed to delete the sipProvider!");
-}
+
+            int tries;
+
+            if (false) {
+                /*
+                 * This seems to timeout for some reason
+                 * It's not really necessary since we are exiting anyway.
+                 */
+
+                //Delete SipProvider
+                for (tries = 0; tries < RETRY_OBJECT_DELETES; tries++) {
+                    try {
+                        sipStack.deleteSipProvider(sipProvider);
+                    } catch (ObjectInUseException ex) {
+                        // Logger.println("Retrying delete of riSipProvider!");
+                        sleep(RETRY_OBJECT_DELETES_AFTER);
+                        continue;
+                    }
+                    break;
+                }
+                if (tries >= RETRY_OBJECT_DELETES) {
+                    throw new CommunicationsException(
+                            "Failed to delete the sipProvider!");
+                }
+            }
 
             //Delete RI ListeningPoint
             for (tries = 0; tries < RETRY_OBJECT_DELETES; tries++) {
                 try {
                     sipStack.deleteListeningPoint(listeningPoint);
-                }
-                catch (ObjectInUseException ex) {
+                } catch (ObjectInUseException ex) {
                     //Logger.println("Retrying delete of riListeningPoint!");
                     sleep(RETRY_OBJECT_DELETES_AFTER);
                     continue;
+                } catch (Exception e) {
                 }
-		catch (Exception e) {
-		}
                 break;
             }
-            if (tries >= RETRY_OBJECT_DELETES)
+            if (tries >= RETRY_OBJECT_DELETES) {
                 throw new CommunicationsException(
-                    "Failed to delete a listeningPoint!");
+                        "Failed to delete a listeningPoint!");
+            }
 
             sipProvider = null;
             listeningPoint = null;
@@ -584,8 +549,7 @@ if (false) {
             viaHeaders = null;
             contactHeader = null;
             fromHeader = null;
-        }finally
-        {
+        } finally {
             console.logExit();
         }
     }
@@ -597,10 +561,8 @@ if (false) {
      *
      * @param sleepFor the number of miliseconds to wait
      */
-    private static void sleep(long sleepFor)
-    {
-        try
-        {
+    private static void sleep(long sleepFor) {
+        try {
             console.logEntry();
 
             long startTime = System.currentTimeMillis();
@@ -608,21 +570,18 @@ if (false) {
             while (haveBeenSleeping < sleepFor) {
                 try {
                     Thread.sleep(sleepFor - haveBeenSleeping);
-                }
-                catch (InterruptedException ex) {
+                } catch (InterruptedException ex) {
                     //we-ll have to wait again!
                 }
                 haveBeenSleeping = (System.currentTimeMillis() - startTime);
             }
-        }finally
-        {
+        } finally {
             console.logExit();
         }
 
     }
 
-    public void setCurrentlyUsedURI(String uri)
-    {
+    public void setCurrentlyUsedURI(String uri) {
         this.currentlyUsedURI = uri;
         this.contactHeader = null;
     }
@@ -638,31 +597,28 @@ if (false) {
      * underlying stack. The exception that caused this CommunicationsException
      * may be extracted with CommunicationsException.getCause()
      */
-    public String register() throws CommunicationsException
-    {
+    public String register() throws CommunicationsException {
         return register(currentlyUsedURI);
     }
-
     private Integer addressLock = new Integer(0);
 
     public String getPublicAddress() {
-	synchronized(addressLock) {
-	    if (currentlyUsedURI == null) {
-		try {
-		    addressLock.wait();
-		} catch (InterruptedException e) {
-		}
-	    }
-	}
+        synchronized (addressLock) {
+            if (currentlyUsedURI == null) {
+                try {
+                    addressLock.wait();
+                } catch (InterruptedException e) {
+                }
+            }
+        }
         return currentlyUsedURI;
     }
-
     private String userName;
 
     private String register(String userName) throws CommunicationsException {
-	this.userName = userName;
+        this.userName = userName;
 
-	String publicAddress;
+        String publicAddress;
 
         try {
             console.logEntry();
@@ -670,127 +626,125 @@ if (false) {
             //Handle default domain name (i.e. transform 1234 -> 1234@sip.com
             String domain = Utils.getPreference("com.sun.mc.softphone.sip.DOMAIN_NAME");
 
-	    String host = null;
+            String host = null;
 
-	    if (domain == null || domain.equals("")) {
-	        host = publicIsa.getAddress().getHostAddress();
-	    }
+            if (domain == null || domain.equals("")) {
+                host = publicIsa.getAddress().getHostAddress();
+            }
 
-	    int publicPort = publicIsa.getPort();
+            int publicPort = publicIsa.getPort();
 
-	    if (userName.indexOf("@") >= 0) {
-		publicAddress = "sip:" + userName + ":" + publicPort;
-	    } else {
-	        if (host == null) {
-	            publicAddress = "sip:" + userName + "@" + domain + ":" + publicPort;
-	        } else {
-	            publicAddress = "sip:" + userName + "@" + host + ":" + publicPort;
-	        }
-	    }
+            if (userName.indexOf("@") >= 0) {
+                publicAddress = "sip:" + userName + ":" + publicPort;
+            } else {
+                if (host == null) {
+                    publicAddress = "sip:" + userName + "@" + domain + ":" + publicPort;
+                } else {
+                    publicAddress = "sip:" + userName + "@" + host + ":" + publicPort;
+                }
+            }
 
             this.currentlyUsedURI = publicAddress;
 
-	    synchronized(addressLock) {
-		addressLock.notifyAll();
-	    }
+            synchronized (addressLock) {
+                addressLock.notifyAll();
+            }
 
-	    //Logger.println("userName " + userName + " host " 
-	    //	+ host + " domain " + domain);
-	    //Logger.println("publicAddress " + publicAddress);
+            //Logger.println("userName " + userName + " host " 
+            //	+ host + " domain " + domain);
+            //Logger.println("publicAddress " + publicAddress);
 
-	    Utils.setPreference("com.sun.mc.softphone.sip.PUBLIC_ADDRESS", publicAddress);
+            Utils.setPreference("com.sun.mc.softphone.sip.PUBLIC_ADDRESS", publicAddress);
 
-	    /*
-	     * WARNING:  This message is read by the Meeting Central application.
-	     * Do not change this message without making the corresponding change
-	     * to MC.
-	     * 
-	     * This must be System.out.println and not Logger.println so that output
-	     * goes to stdout where the MC console is expecting to read this message.
-	     */
-	    System.out.println("SipCommunicator Public Address is '" + publicAddress + "'");
+            /*
+             * WARNING:  This message is read by the Meeting Central application.
+             * Do not change this message without making the corresponding change
+             * to MC.
+             * 
+             * This must be System.out.println and not Logger.println so that output
+             * goes to stdout where the MC console is expecting to read this message.
+             */
+            System.out.println("SipCommunicator Public Address is '" + publicAddress + "'");
 
-	    Logger.writeFile("SipCommunicator Public Address is '" + publicAddress + "'");
+            Logger.writeFile("SipCommunicator Public Address is '" + publicAddress + "'");
 
-	    registrarAddress = Utils.getPreference("com.sun.mc.softphone.sip.REGISTRAR_ADDRESS");
+            registrarAddress = Utils.getPreference("com.sun.mc.softphone.sip.REGISTRAR_ADDRESS");
 
-	    registrarPort = Integer.parseInt(
-		Utils.getPreference("com.sun.mc.softphone.sip.REGISTRAR_UDP_PORT"));
-	    registrarTransport = Utils.getPreference("com.sun.mc.softphone.sip.REGISTRAR_TRANSPORT");
+            registrarPort = Integer.parseInt(
+                    Utils.getPreference("com.sun.mc.softphone.sip.REGISTRAR_UDP_PORT"));
+            registrarTransport = Utils.getPreference("com.sun.mc.softphone.sip.REGISTRAR_TRANSPORT");
 
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println("Registrar port " + registrarPort);
-	    }
+            if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+                Logger.println("Registrar port " + registrarPort);
+            }
 
-	    registrationsExpiration = 3600;
+            registrationsExpiration = 3600;
 
-	    String s = Utils.getPreference(
-		 "com.sun.mc.softphone.sip.WAIT_UNREGISTGRATION_FOR");
+            String s = Utils.getPreference(
+                    "com.sun.mc.softphone.sip.WAIT_UNREGISTGRATION_FOR");
 
-	    if (s != null && s.length() > 0) {
-	        try {
-	            registrationsExpiration = Integer.parseInt(Utils.getPreference(
-		        "com.sun.mc.softphone.sip.WAIT_UNREGISTGRATION_FOR"));
-	        } catch (NumberFormatException e) {
-		    Logger.println("Invalid registrations expiration:  " + e.getMessage());
-	        }
-	    }
+            if (s != null && s.length() > 0) {
+                try {
+                    registrationsExpiration = Integer.parseInt(Utils.getPreference(
+                            "com.sun.mc.softphone.sip.WAIT_UNREGISTGRATION_FOR"));
+                } catch (NumberFormatException e) {
+                    Logger.println("Invalid registrations expiration:  " + e.getMessage());
+                }
+            }
 
-	    if (registrarAddress != null && registrarAddress.length() > 0) {
-		int ix = registrarAddress.indexOf(";sip-stun");
+            if (registrarAddress != null && registrarAddress.length() > 0) {
+                int ix = registrarAddress.indexOf(";sip-stun");
 
-		if (ix >= 0) {
-		    registrarAddress = registrarAddress.substring(0, ix);
-		}
+                if (ix >= 0) {
+                    registrarAddress = registrarAddress.substring(0, ix);
+                }
 
-		Logger.println("Registering with registrar " + registrarAddress + ":"
-		    + registrarPort + " expiration " + registrationsExpiration);
+                Logger.println("Registering with registrar " + registrarAddress + ":"
+                        + registrarPort + " expiration " + registrationsExpiration);
 
                 registerProcessing.register(registrarAddress, registrarPort,
-                   registrarTransport, registrationsExpiration);
-	    } else {
-		/*
-		 * Even though we didn't register, notify everybody of our address
-		 */
-		try {
+                        registrarTransport, registrationsExpiration);
+            } else {
+                /*
+                 * Even though we didn't register, notify everybody of our address
+                 */
+                try {
                     fireRegistered((SipURI) addressFactory.createURI(publicAddress));
-		} catch (ParseException e) {
-		    Logger.println("Invalid publicAddress " + publicAddress);
-		}
-	    }
-        }
-        finally {
+                } catch (ParseException e) {
+                    Logger.println("Invalid publicAddress " + publicAddress);
+                }
+            }
+        } finally {
             console.logExit();
         }
-	return publicAddress;
+        return publicAddress;
     }
 
-    public String startRegisterProcess() throws CommunicationsException
-    {
-	String publicAddress = null;
+    public String startRegisterProcess() throws CommunicationsException {
+        String publicAddress = null;
 
         try {
             console.logEntry();
             checkIfStarted();
 
-	    String userName = sipCommunicator.getUserName();
-	    String authenticationUserName = sipCommunicator.getAuthenticationUserName();
+            String userName = sipCommunicator.getUserName();
+            String authenticationUserName = sipCommunicator.getAuthenticationUserName();
 
             UserCredentials defaultCredentials = new UserCredentials();
 
-	    defaultCredentials.setUserName(userName);
-	    defaultCredentials.setAuthenticationUserName(authenticationUserName);
+            defaultCredentials.setUserName(userName);
+            defaultCredentials.setAuthenticationUserName(authenticationUserName);
             defaultCredentials.setPassword(new char[0]);
 
-            String realm = 
-	 	Utils.getPreference("com.sun.mc.softphone.sip.DEFAULT_AUTHENTICATION_REALM");
+            String realm =
+                    Utils.getPreference("com.sun.mc.softphone.sip.DEFAULT_AUTHENTICATION_REALM");
 
-	    if (realm == null) {
-		realm = "";
-	    }
+            if (realm == null) {
+                realm = "";
+            }
 
             UserCredentials initialCredentials = securityAuthority.obtainCredentials(realm,
-                defaultCredentials);
+                    defaultCredentials);
 
             publicAddress = register(initialCredentials.getUserName());
 
@@ -798,14 +752,13 @@ if (false) {
             //from  header in SipManager has been set to a valid value by the RegisterProcesing
             //class. Use it to extract the valid user name that needs to be cached by
             //the security manager together with the user provided password.
-            initialCredentials.setUserName(((SipURI)getFromHeader().getAddress().getURI()).getUser());
+            initialCredentials.setUserName(((SipURI) getFromHeader().getAddress().getURI()).getUser());
 
             cacheCredentials(realm, initialCredentials);
-        }
-        finally {
+        } finally {
             console.logExit();
         }
-	return publicAddress;
+        return publicAddress;
     }
 
     /**
@@ -817,8 +770,7 @@ if (false) {
      * underlying stack. The exception that caused this CommunicationsException
      * may be extracted with CommunicationsException.getCause()
      */
-    public void unregister() throws CommunicationsException
-    {
+    public void unregister() throws CommunicationsException {
         try {
             console.logEntry();
             if (!isRegistered()) {
@@ -827,8 +779,7 @@ if (false) {
             checkIfStarted();
             registerProcessing.unregister();
 
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -838,21 +789,19 @@ if (false) {
      * with a registrar.
      * @return true if the application is registered with a registrar.
      */
-    public boolean isRegistered()
-    {
+    public boolean isRegistered() {
         return (registerProcessing != null && registerProcessing.isRegistered());
     }
 
     public InetSocketAddress getPublicIsa() {
-	return publicIsa;
+        return publicIsa;
     }
 
     /**
      * Determines whether the SipManager was start()ed.
      * @return true if the SipManager was start()ed.
      */
-    public boolean isStarted()
-    {
+    public boolean isStarted() {
         return isStarted;
     }
 
@@ -871,15 +820,14 @@ if (false) {
      * @throws CommunicationsException if an exception occurs while sending and
      * parsing.
      */
-    public Call establishCall(CallListener callListener, 
-	    String callee, String sdpContent) throws CommunicationsException {
+    public Call establishCall(CallListener callListener,
+            String callee, String sdpContent) throws CommunicationsException {
 
         try {
             console.logEntry();
             checkIfStarted();
             return callProcessing.invite(callListener, callee, sdpContent);
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //CALL
@@ -892,14 +840,12 @@ if (false) {
      * @throws CommunicationsException if an exception occurs while invoking this
      * method.
      */
-    public void endCall(int callID) throws CommunicationsException
-    {
+    public void endCall(int callID) throws CommunicationsException {
         try {
             console.logEntry();
             checkIfStarted();
             callProcessing.endCall(callID);
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -908,8 +854,7 @@ if (false) {
      * Calls endCall for all currently active calls.
      * @throws CommunicationsException if an exception occurs while
      */
-    public void endAllCalls() throws CommunicationsException
-    {
+    public void endAllCalls() throws CommunicationsException {
         try {
             console.logEntry();
             if (callProcessing == null) {
@@ -917,14 +862,12 @@ if (false) {
             }
             Object[] keys = callProcessing.getCallDispatcher().getAllCalls();
             for (int i = 0; i < keys.length; i++) {
-                endCall( ( (Integer) keys[i]).intValue());
+                endCall(((Integer) keys[i]).intValue());
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
-
 
     /**
      * Causes CallProcessing to send a 200 OK response, with the specified
@@ -935,14 +878,12 @@ if (false) {
      * method.
      */
     public void answerCall(int callID, String sdpContent) throws
-        CommunicationsException
-    {
+            CommunicationsException {
         try {
             console.logEntry();
             checkIfStarted();
             callProcessing.sayOK(callID, sdpContent);
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //answer to
@@ -953,45 +894,39 @@ if (false) {
      * @param request the request that is being answered.
      */
     void sendNotImplemented(ServerTransaction serverTransaction,
-                            Request request)
-    {
+            Request request) {
         try {
             console.logEntry();
             Response notImplemented = null;
             try {
                 notImplemented =
-                    messageFactory.createResponse(Response.NOT_IMPLEMENTED,
-                                                  request);
+                        messageFactory.createResponse(Response.NOT_IMPLEMENTED,
+                        request);
 
-		if (serverTransaction.getDialog() != null) {
-		    // XXX JP getDialog() sometimes returns null
+                if (serverTransaction.getDialog() != null) {
+                    // XXX JP getDialog() sometimes returns null
                     attachToTag(notImplemented, serverTransaction.getDialog());
-		}
-            }
-            catch (ParseException ex) {
+                }
+            } catch (ParseException ex) {
                 fireCommunicationsError(
-                    new CommunicationsException(
-                    "Failed to create a NOT_IMPLEMENTED response to a "
-                    + request.getMethod()
-                    + " request!",
-                    ex)
-                    );
+                        new CommunicationsException(
+                        "Failed to create a NOT_IMPLEMENTED response to a "
+                        + request.getMethod()
+                        + " request!",
+                        ex));
                 return;
             }
             try {
                 serverTransaction.sendResponse(notImplemented);
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 fireCommunicationsError(
-                    new CommunicationsException(
-                    "Failed to create a NOT_IMPLEMENTED response to a "
-                    + request.getMethod()
-                    + " request!",
-                    ex)
-                    );
+                        new CommunicationsException(
+                        "Failed to create a NOT_IMPLEMENTED response to a "
+                        + request.getMethod()
+                        + " request!",
+                        ex));
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -1008,8 +943,7 @@ if (false) {
      * @throws CommunicationsException if a ParseException occurs while
      * initially composing the FromHeader.
      */
-    FromHeader getFromHeader() throws CommunicationsException
-    {
+    FromHeader getFromHeader() throws CommunicationsException {
         try {
             console.logEntry();
             if (fromHeader != null) {
@@ -1017,7 +951,7 @@ if (false) {
             }
             try {
                 SipURI fromURI = (SipURI) addressFactory.createURI(
-                    currentlyUsedURI);
+                        currentlyUsedURI);
                 //Unnecessary test (report by Willem Romijn)
                 //if (console.isDebugEnabled())
                 fromURI.setTransportParam(listeningPoint.getTransport());
@@ -1028,19 +962,18 @@ if (false) {
                     fromAddress.setDisplayName(displayName);
                 } else {
                     fromAddress.setDisplayName(userName);
-		}
+                }
                 fromHeader = headerFactory.createFromHeader(fromAddress,
-                    Integer.toString(hashCode()));
+                        Integer.toString(hashCode()));
                 console.debug("Generated from header: " + fromHeader);
             } catch (ParseException ex) {
                 console.error(
-                    "A ParseException occurred while creating From Header!", ex);
+                        "A ParseException occurred while creating From Header!", ex);
                 throw new CommunicationsException(
-                    "A ParseException occurred while creating From Header!", ex);
+                        "A ParseException occurred while creating From Header!", ex);
             }
             return fromHeader;
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -1052,8 +985,7 @@ if (false) {
      * @throws CommunicationsException if an exception is thrown while calling
      * getContactHeader(false)
      */
-    ContactHeader getContactHeader() throws CommunicationsException
-    {
+    ContactHeader getContactHeader() throws CommunicationsException {
         return getContactHeader(true);
     }
 
@@ -1063,8 +995,7 @@ if (false) {
      * @throws CommunicationsException if an exception occurs while executing
      * getContactHeader(true).
      */
-    ContactHeader getRegistrationContactHeader() throws CommunicationsException
-    {
+    ContactHeader getRegistrationContactHeader() throws CommunicationsException {
         return getContactHeader(true);
     }
 
@@ -1083,8 +1014,7 @@ if (false) {
      * initially composing the FromHeader.
      */
     ContactHeader getContactHeader(boolean useLocalHostAddress) throws
-        CommunicationsException
-    {
+            CommunicationsException {
         try {
             console.logEntry();
             if (contactHeader != null) {
@@ -1094,38 +1024,35 @@ if (false) {
 
                 SipURI contactURI;
                 if (useLocalHostAddress) {
-		    String user = 
-			((SipURI) getFromHeader().getAddress().getURI()).getUser();
+                    String user =
+                            ((SipURI) getFromHeader().getAddress().getURI()).getUser();
 
                     contactURI = (SipURI) addressFactory.createSipURI(user,
-                        publicIsa.getAddress().getHostAddress());
-                }
-                else {
+                            publicIsa.getAddress().getHostAddress());
+                } else {
                     contactURI = (SipURI) addressFactory.createURI(
-                        currentlyUsedURI);
+                            currentlyUsedURI);
                 }
                 contactURI.setTransportParam(listeningPoint.getTransport());
                 contactURI.setPort(publicIsa.getPort());
                 Address contactAddress = addressFactory.createAddress(
-                    contactURI);
+                        contactURI);
                 if (displayName != null && displayName.trim().length() > 0) {
                     contactAddress.setDisplayName(displayName);
                 }
                 contactHeader = headerFactory.createContactHeader(
-                    contactAddress);
+                        contactAddress);
                 if (console.isDebugEnabled()) {
                     console.debug("generated contactHeader:" + contactHeader);
                 }
-            }
-            catch (ParseException ex) {
+            } catch (ParseException ex) {
                 console.error(
-                    "A ParseException occurred while creating From Header!", ex);
+                        "A ParseException occurred while creating From Header!", ex);
                 throw new CommunicationsException(
-                    "A ParseException occurred while creating From Header!", ex);
+                        "A ParseException occurred while creating From Header!", ex);
             }
             return contactHeader;
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -1138,8 +1065,7 @@ if (false) {
      * @throws CommunicationsException if a ParseException is to occur while
      * initializing the array list.
      */
-    ArrayList getLocalViaHeaders() throws CommunicationsException
-    {
+    ArrayList getLocalViaHeaders() throws CommunicationsException {
         try {
             console.logEntry();
             /*
@@ -1153,39 +1079,35 @@ if (false) {
             ListeningPoint lp = sipProvider.getListeningPoint();
             viaHeaders = new ArrayList();
             try {
-		String addr = lp.getIPAddress();
+                String addr = lp.getIPAddress();
 
                 ViaHeader viaHeader = headerFactory.createViaHeader(
-                    addr,
-                    lp.getPort(),
-                    lp.getTransport(),
-                    null
-                    );
+                        addr,
+                        lp.getPort(),
+                        lp.getTransport(),
+                        null);
 
-		viaHeader.setRPort();
+                viaHeader.setRPort();
 
                 viaHeaders.add(viaHeader);
                 if (console.isDebugEnabled()) {
                     console.debug("generated via headers:" + viaHeader);
                 }
                 return viaHeaders;
-            }
-            catch (ParseException ex) {
+            } catch (ParseException ex) {
                 console.error(
-                    "A ParseException occurred while creating Via Headers!");
+                        "A ParseException occurred while creating Via Headers!");
                 throw new CommunicationsException(
-                    "A ParseException occurred while creating Via Headers!");
-            }
-            catch (InvalidArgumentException ex) {
+                        "A ParseException occurred while creating Via Headers!");
+            } catch (InvalidArgumentException ex) {
                 console.error(
-                    "Unable to create a via header for port " + lp.getPort(),
-                    ex);
+                        "Unable to create a via header for port " + lp.getPort(),
+                        ex);
                 throw new CommunicationsException(
-                    "Unable to create a via header for port " + lp.getPort(),
-                    ex);
+                        "Unable to create a via header for port " + lp.getPort(),
+                        ex);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -1197,8 +1119,7 @@ if (false) {
      * sending requests
      * @throws CommunicationsException if MAX_FORWARDS has an invalid value.
      */
-    MaxForwardsHeader getMaxForwardsHeader() throws CommunicationsException
-    {
+    MaxForwardsHeader getMaxForwardsHeader() throws CommunicationsException {
         try {
             console.logEntry();
             if (maxForwardsHeader != null) {
@@ -1208,16 +1129,14 @@ if (false) {
                 maxForwardsHeader = headerFactory.createMaxForwardsHeader(MAX_FORWARDS);
                 if (console.isDebugEnabled()) {
                     console.debug("generate max forwards: "
-                                  + maxForwardsHeader.toString());
+                            + maxForwardsHeader.toString());
                 }
                 return maxForwardsHeader;
-            }
-            catch (InvalidArgumentException ex) {
+            } catch (InvalidArgumentException ex) {
                 throw new CommunicationsException(
-                    "A problem occurred while creating MaxForwardsHeader", ex);
+                        "A problem occurred while creating MaxForwardsHeader", ex);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -1226,16 +1145,13 @@ if (false) {
      * Returns the user used to create the From Header URI.
      * @return the user used to create the From Header URI.
      */
-    String getLocalUser()
-    {
+    String getLocalUser() {
         try {
             console.logEntry();
-            return ( (SipURI) getFromHeader().getAddress().getURI()).getUser();
-        }
-        catch (CommunicationsException ex) {
+            return ((SipURI) getFromHeader().getAddress().getURI()).getUser();
+        } catch (CommunicationsException ex) {
             return "";
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
@@ -1247,47 +1163,44 @@ if (false) {
      * @param containingDialog the Dialog instance that is to extract a unique
      * Tag value (containingDialog.hashCode())
      */
-    void attachToTag(Response response, Dialog containingDialog)
-    {
+    void attachToTag(Response response, Dialog containingDialog) {
         try {
             console.logEntry();
             ToHeader to = (ToHeader) response.getHeader(ToHeader.NAME);
 
             if (to == null) {
                 fireCommunicationsError(
-                    new CommunicationsException(
-                    "No TO header found in, attaching a to tag is therefore impossible"));
+                        new CommunicationsException(
+                        "No TO header found in, attaching a to tag is therefore impossible"));
             }
             try {
                 if (to.getTag() == null || to.getTag().trim().length() == 0) {
                     if (console.isDebugEnabled()) {
-                        console.debug("generated to tag: " +
-                                      containingDialog.hashCode());
+                        console.debug("generated to tag: "
+                                + containingDialog.hashCode());
                     }
                     to.setTag(Integer.toString(containingDialog.hashCode()));
                 }
-            }
-            catch (ParseException ex) {
+            } catch (ParseException ex) {
                 fireCommunicationsError(
-                    new CommunicationsException(
-                    "Failed to attach a TO tag to an outgoing response"));
+                        new CommunicationsException(
+                        "Failed to attach a TO tag to an outgoing response"));
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
 
     private int findFreePort(String portString) {
-	int port = 5060;
+        int port = 5060;
 
-	try {
-	    port = Integer.parseInt(portString);
-	} catch (NumberFormatException e) {
-	    Logger.println("Invalid preferred port '" + portString 
-		+ "'.  Defaulting to " + port);
-	}
-	
+        try {
+            port = Integer.parseInt(portString);
+        } catch (NumberFormatException e) {
+            Logger.println("Invalid preferred port '" + portString
+                    + "'.  Defaulting to " + port);
+        }
+
         //
         // Make sure port is available.  If not, start with 5060 until we
         // find a useable port.
@@ -1296,7 +1209,7 @@ if (false) {
 
         while (true) {
             try {
-		//Logger.println("trying port " + port);
+                //Logger.println("trying port " + port);
                 DatagramSocket socket = new DatagramSocket(port);
                 socket.close();
                 return port;
@@ -1311,14 +1224,13 @@ if (false) {
                     port += 2;
                 }
             } catch (Exception e) {
-		break;
-	    }
+                break;
+            }
         }
 
-	Logger.println("FATAL:  no local port available!");
-	return -1;
+        Logger.println("FATAL:  no local port available!");
+        return -1;
     }
-
 
 //============================     SECURITY     ================================
     /**
@@ -1328,8 +1240,7 @@ if (false) {
      * @param authority the SecurityAuthority instance that should be consulted
      * later on for user credentials.
      */
-    public void setSecurityAuthority(SecurityAuthority authority)
-    {
+    public void setSecurityAuthority(SecurityAuthority authority) {
         //keep a copty
         this.securityAuthority = authority;
         sipSecurityManager.setSecurityAuthority(authority);
@@ -1342,29 +1253,26 @@ if (false) {
      * @param realm the realm these credentials should apply for.
      * @param credentials a set of credentials (username and pass)
      */
-    public void cacheCredentials(String realm, UserCredentials credentials )
-    {
+    public void cacheCredentials(String realm, UserCredentials credentials) {
         sipSecurityManager.cacheCredentials(realm, credentials);
     }
 //============================ EVENT DISPATHING ================================
+
     /**
      * Adds a CommunicationsListener to SipManager.
      * @param listener The CommunicationsListener to be added.
      */
-    public void addCommunicationsListener(CommunicationsListener listener)
-    {
+    public void addCommunicationsListener(CommunicationsListener listener) {
         try {
             console.logEntry();
             listeners.add(listener);
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
 
     //------------ call received dispatch
-    void fireCallReceived(Call call)
-    {
+    void fireCallReceived(Call call) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
@@ -1372,17 +1280,15 @@ if (false) {
             }
             CallEvent evt = new CallEvent(call);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).callReceived(evt);
+                ((CommunicationsListener) listeners.get(i)).callReceived(evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //call received
 
     //------------ call received dispatch
-    void fireMessageReceived(Request message)
-    {
+    void fireMessageReceived(Request message) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
@@ -1390,20 +1296,18 @@ if (false) {
             }
             MessageEvent evt = new MessageEvent(message);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).messageReceived(
-                    evt);
+                ((CommunicationsListener) listeners.get(i)).messageReceived(
+                        evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //call received
 
     //------------ registerred
-    void fireRegistered(SipURI fromURI)
-    {
-	String address = "sip:" + fromURI.getUser() + "@"
-	    + fromURI.getHost() + ":" + fromURI.getPort();
+    void fireRegistered(SipURI fromURI) {
+        String address = "sip:" + fromURI.getUser() + "@"
+                + fromURI.getHost() + ":" + fromURI.getPort();
 
         try {
             console.logEntry();
@@ -1412,30 +1316,27 @@ if (false) {
             }
             RegistrationEvent evt = new RegistrationEvent(fromURI.toString());
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).registered(evt);
+                ((CommunicationsListener) listeners.get(i)).registered(evt);
             }
 
-	    setCurrentlyUsedURI(address);
+            setCurrentlyUsedURI(address);
 
-	    publicIsa = new InetSocketAddress(fromURI.getHost(), 
-		fromURI.getPort());
+            publicIsa = new InetSocketAddress(fromURI.getHost(),
+                    fromURI.getPort());
 
-	    Utils.setPreference("com.sun.mc.softphone.sip.PUBLIC_ADDRESS", 
-		address);
+            Utils.setPreference("com.sun.mc.softphone.sip.PUBLIC_ADDRESS",
+                    address);
 
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println("Softphone registered as " + address);
-	    }
-        }
-
-        finally {
+            if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+                Logger.println("Softphone registered as " + address);
+            }
+        } finally {
             console.logExit();
         }
     } //call received
 
     //------------ registering
-    void fireRegistering(String address)
-    {
+    void fireRegistering(String address) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
@@ -1443,18 +1344,16 @@ if (false) {
             }
             RegistrationEvent evt = new RegistrationEvent(address);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).registering(evt);
+                ((CommunicationsListener) listeners.get(i)).registering(evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //call received
 
     //------------ unregistered
-    void fireUnregistered(String address)
-    {
-	Logger.println("Unable to register address " + address);
+    void fireUnregistered(String address) {
+        Logger.println("Unable to register address " + address);
 
         try {
             console.logEntry();
@@ -1463,16 +1362,14 @@ if (false) {
             }
             RegistrationEvent evt = new RegistrationEvent(address);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).unregistered(evt);
+                ((CommunicationsListener) listeners.get(i)).unregistered(evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //call received
 
-    void fireUnregistering(String address)
-    {
+    void fireUnregistering(String address) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
@@ -1480,18 +1377,15 @@ if (false) {
             }
             RegistrationEvent evt = new RegistrationEvent(address);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).unregistering(evt);
+                ((CommunicationsListener) listeners.get(i)).unregistering(evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //call received
 
-
     //---------------- received unknown message
-    void fireUnknownMessageReceived(Message message)
-    {
+    void fireUnknownMessageReceived(Message message) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
@@ -1499,122 +1393,106 @@ if (false) {
             }
             UnknownMessageEvent evt = new UnknownMessageEvent(message);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).
-                    receivedUnknownMessage(
-                    evt);
+                ((CommunicationsListener) listeners.get(i)).receivedUnknownMessage(
+                        evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //unknown message
 
     //---------------- rejected a call
-    void fireCallRejectedLocally(String reason, Message invite)
-    {
+    void fireCallRejectedLocally(String reason, Message invite) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
                 console.debug("locally rejected call. reason="
-                              + reason
-                              + "\ninvite message=" + invite);
+                        + reason
+                        + "\ninvite message=" + invite);
             }
             CallRejectedEvent evt = new CallRejectedEvent(reason, invite);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).
-                    callRejectedLocally(
-                    evt);
+                ((CommunicationsListener) listeners.get(i)).callRejectedLocally(
+                        evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
 
-    void fireCallRejectedRemotely(String reason, Message invite)
-    {
+    void fireCallRejectedRemotely(String reason, Message invite) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
                 console.debug("call rejected remotely. reason="
-                              + reason
-                              + "\ninvite message=" + invite);
+                        + reason
+                        + "\ninvite message=" + invite);
             }
             CallRejectedEvent evt = new CallRejectedEvent(reason, invite);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).
-                    callRejectedRemotely(
-                    evt);
+                ((CommunicationsListener) listeners.get(i)).callRejectedRemotely(
+                        evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
 
     //call rejected
     //---------------- error occurred
-    void fireCommunicationsError(Throwable throwable)
-    {
+    void fireCommunicationsError(Throwable throwable) {
         try {
             console.logEntry();
             console.error(throwable);
             CommunicationsErrorEvent evt = new CommunicationsErrorEvent(
-                throwable);
+                    throwable);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (CommunicationsListener) listeners.get(i)).
-                    communicationsErrorOccurred(evt);
+                ((CommunicationsListener) listeners.get(i)).communicationsErrorOccurred(evt);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //error occurred
 
 //============================= SIP LISTENER METHODS ==============================
-    public void processRequest(RequestEvent requestReceivedEvent)
-    {
+    public void processRequest(RequestEvent requestReceivedEvent) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
                 console.debug("received request=" + requestReceivedEvent);
             }
-            ServerTransaction serverTransaction = requestReceivedEvent.
-                getServerTransaction();
+            ServerTransaction serverTransaction = requestReceivedEvent.getServerTransaction();
             Request request = requestReceivedEvent.getRequest();
-            String method = ( (CSeqHeader) request.getHeader(CSeqHeader.NAME)).
-                getMethod();
+            String method = ((CSeqHeader) request.getHeader(CSeqHeader.NAME)).getMethod();
             if (serverTransaction == null) {
                 try {
                     serverTransaction = sipProvider.getNewServerTransaction(
-                        request);
-                }
-                catch (TransactionAlreadyExistsException ex) {
+                            request);
+                } catch (TransactionAlreadyExistsException ex) {
                     /*fireCommunicationsError(
-                        new CommunicationsException(
-                        "Failed to create a new server"
-                        + "transaction for an incoming request\n"
-                        + "(Next message contains the request)",
-                        ex));
+                    new CommunicationsException(
+                    "Failed to create a new server"
+                    + "transaction for an incoming request\n"
+                    + "(Next message contains the request)",
+                    ex));
                     fireUnknownMessageReceived(request);*/
                     //let's not scare the user
                     console.trace("Failed to create a new server"
-                        + "transaction for an incoming request");
+                            + "transaction for an incoming request");
 
                     return;
-                }
-                catch (TransactionUnavailableException ex) {
+                } catch (TransactionUnavailableException ex) {
                     /**
                     fireCommunicationsError(
-                        new CommunicationsException(
-                        "Failed to create a new server"
-                        + "transaction for an incoming request\n"
-                        + "(Next message contains the request)",
-                        ex));
+                    new CommunicationsException(
+                    "Failed to create a new server"
+                    + "transaction for an incoming request\n"
+                    + "(Next message contains the request)",
+                    ex));
                     fireUnknownMessageReceived(request);*/
                     //let's not scare the user
-                    console.trace("Failed to create a new server " 
-		    	+ "transaction for an incoming request");
+                    console.trace("Failed to create a new server "
+                            + "transaction for an incoming request");
                     return;
                 }
             }
@@ -1624,187 +1502,164 @@ if (false) {
             if (request.getMethod().equals(Request.INVITE)) {
                 console.debug("received INVITE");
 
-		if (currentlyUsedURI == null) {
-		    synchronized(registerProcessing) {
-		        if (delayedInviteProcessor != null) {
-			    return;
-		        }
+                if (currentlyUsedURI == null) {
+                    synchronized (registerProcessing) {
+                        if (delayedInviteProcessor != null) {
+                            return;
+                        }
 
-		        Logger.println("Delay processing INVITE request "
-			    + "until softphone has its local address");
+                        Logger.println("Delay processing INVITE request "
+                                + "until softphone has its local address");
 
-		        delayedInviteProcessor = new DelayedInviteProcessor(
-			    serverTransaction, request);
-		        return;
-		    }
-		}
+                        delayedInviteProcessor = new DelayedInviteProcessor(
+                                serverTransaction, request);
+                        return;
+                    }
+                }
 
                 if (serverTransaction.getDialog().getState() == null) {
-                    if(console.isDebugEnabled())
+                    if (console.isDebugEnabled()) {
                         console.debug("request is an INVITE. Dialog state="
-                                      +serverTransaction.getDialog().getState());
+                                + serverTransaction.getDialog().getState());
+                    }
                     callProcessing.processInvite(serverTransaction, request);
                 } else {
                     console.debug("request is a reINVITE. Dialog state="
-                                      +serverTransaction.getDialog().getState());
+                            + serverTransaction.getDialog().getState());
                     callProcessing.processReInvite(serverTransaction, request);
                 }
-            }
-            //ACK
+            } //ACK
             else if (request.getMethod().equals(Request.ACK)) {
                 if (serverTransaction != null
-                    && serverTransaction.getDialog().getFirstTransaction().
-                    getRequest().getMethod().equals(Request.INVITE)) {
+                        && serverTransaction.getDialog().getFirstTransaction().
+                        getRequest().getMethod().equals(Request.INVITE)) {
                     callProcessing.processAck(serverTransaction, request);
-                }
-                else {
+                } else {
                     // just ignore
                     console.debug("ignoring ack");
                 }
-            }
-            //BYE
+            } //BYE
             else if (request.getMethod().equals(Request.BYE)) {
                 if (dialog.getFirstTransaction().getRequest().getMethod().
-                    equals(
-                    Request.INVITE)) {
+                        equals(
+                        Request.INVITE)) {
                     callProcessing.processBye(serverTransaction, request);
                 }
-            }
-            //CANCEL
+            } //CANCEL
             else if (request.getMethod().equals(Request.CANCEL)) {
                 if (dialog.getFirstTransaction().getRequest().getMethod().
-                    equals(
-                    Request.INVITE)) {
+                        equals(
+                        Request.INVITE)) {
                     callProcessing.processCancel(serverTransaction, request);
-                }
-                else {
+                } else {
                     sendNotImplemented(serverTransaction, request);
 
                     fireUnknownMessageReceived(requestReceivedEvent.getRequest());
                 }
-            }
-            //REFER
+            } //REFER
             else if (request.getMethod().equals(Request.REFER)) {
                 console.debug("Received REFER request");
                 transferProcessing.processRefer(serverTransaction, request);
-            }
-            else if (request.getMethod().equals(Request.INFO)) {
+            } else if (request.getMethod().equals(Request.INFO)) {
                 /** @todo add proper request handling */
                 sendNotImplemented(serverTransaction, request);
                 fireUnknownMessageReceived(requestReceivedEvent.getRequest());
-            }
-            else if (request.getMethod().equals(Request.MESSAGE)) {
+            } else if (request.getMethod().equals(Request.MESSAGE)) {
                 fireMessageReceived(request);
-            }
-            else if (request.getMethod().equals(Request.NOTIFY)) {
+            } else if (request.getMethod().equals(Request.NOTIFY)) {
                 /** @todo add proper request handling */
                 sendNotImplemented(serverTransaction, request);
                 fireUnknownMessageReceived(requestReceivedEvent.getRequest());
-            }
-            else if (request.getMethod().equals(Request.OPTIONS)) {
+            } else if (request.getMethod().equals(Request.OPTIONS)) {
                 /** @todo add proper request handling */
                 sendNotImplemented(serverTransaction, request);
                 fireUnknownMessageReceived(requestReceivedEvent.getRequest());
-            }
-            else if (request.getMethod().equals(Request.PRACK)) {
+            } else if (request.getMethod().equals(Request.PRACK)) {
                 /** @todo add proper request handling */
                 sendNotImplemented(serverTransaction, request);
                 fireUnknownMessageReceived(requestReceivedEvent.getRequest());
-            }
-            else if (request.getMethod().equals(Request.REGISTER)) {
+            } else if (request.getMethod().equals(Request.REGISTER)) {
                 /** @todo add proper request handling */
                 sendNotImplemented(serverTransaction, request);
                 fireUnknownMessageReceived(requestReceivedEvent.getRequest());
-            }
-            else if (request.getMethod().equals(Request.SUBSCRIBE)) {
+            } else if (request.getMethod().equals(Request.SUBSCRIBE)) {
                 /** @todo add proper request handling */
                 sendNotImplemented(serverTransaction, request);
                 fireUnknownMessageReceived(requestReceivedEvent.getRequest());
-            }
-            else if (request.getMethod().equals(Request.UPDATE)) {
+            } else if (request.getMethod().equals(Request.UPDATE)) {
                 /** @todo add proper request handling */
                 sendNotImplemented(serverTransaction, request);
                 fireUnknownMessageReceived(requestReceivedEvent.getRequest());
-            }
-            else {
+            } else {
                 //We couldn't recognise the message
                 sendNotImplemented(serverTransaction, request);
 
                 fireUnknownMessageReceived(requestReceivedEvent.getRequest());
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
 
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("Process request returning... " 
-                + requestReceivedEvent.getRequest().getMethod());
-	}
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Process request returning... "
+                    + requestReceivedEvent.getRequest().getMethod());
+        }
     }
 
-    public void processTimeout(TimeoutEvent transactionTimeOutEvent)
-    {
+    public void processTimeout(TimeoutEvent transactionTimeOutEvent) {
         if (transactionTimeOutEvent == null) {
-	    Logger.println("processTimeout:  transactionTimeOutEvent is null");
-	    return;
-	}
+            Logger.println("processTimeout:  transactionTimeOutEvent is null");
+            return;
+        }
 
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
                 console.debug("received time out event: "
-                              + transactionTimeOutEvent);
+                        + transactionTimeOutEvent);
             }
             Transaction transaction;
             if (transactionTimeOutEvent.isServerTransaction()) {
                 transaction = transactionTimeOutEvent.getServerTransaction();
-            }
-            else {
+            } else {
                 transaction = transactionTimeOutEvent.getClientTransaction();
             }
             Request request =
-                transaction.getRequest();
+                    transaction.getRequest();
             if (request.getMethod().equals(Request.REGISTER)) {
                 registerProcessing.processTimeout(transaction, request);
-            }
-            else if (request.getMethod().equals(Request.INVITE)) {
+            } else if (request.getMethod().equals(Request.INVITE)) {
                 callProcessing.processTimeout(transaction, request);
-            }
-            else {
+            } else {
                 //Just show an error for now
                 //Console.showError("TimeOut Error!",
                 //    "Received a TimeoutEvent while waiting on a message"
                 //    + "\n(Check Details to see the message that caused it)",
                 //    request.toString()
                 //    );
-		// if (MediaManager.isStarted()) {
-		if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-		    Console.showError(
-			"Timeout error while waiting for a response to "
-		        + request.getMethod());
-		}
-		// }
+                // if (MediaManager.isStarted()) {
+                if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+                    Console.showError(
+                            "Timeout error while waiting for a response to "
+                            + request.getMethod());
+                }
+                // }
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
-
     private ServerTransaction serverTransaction;
     private Request request;
 
     //-------------------- PROCESS RESPONSE
-    public void processResponse(ResponseEvent responseReceivedEvent)
-    {
+    public void processResponse(ResponseEvent responseReceivedEvent) {
         try {
             console.logEntry();
             if (console.isDebugEnabled()) {
                 console.debug("received response=" + responseReceivedEvent);
             }
-            ClientTransaction clientTransaction = responseReceivedEvent.
-                getClientTransaction();
+            ClientTransaction clientTransaction = responseReceivedEvent.getClientTransaction();
             if (clientTransaction == null) {
                 console.debug("ignoring a transactionless response");
                 return;
@@ -1812,14 +1667,13 @@ if (false) {
             Response response = responseReceivedEvent.getResponse();
 
             Dialog dialog = clientTransaction.getDialog();
-            String method = ( (CSeqHeader) response.getHeader(CSeqHeader.NAME)).
-                getMethod();
+            String method = ((CSeqHeader) response.getHeader(CSeqHeader.NAME)).getMethod();
             Response responseClone = (Response) response.clone();
             //OK
 
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println("Got response code " + response.getStatusCode());
-	    }
+            if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+                Logger.println("Got response code " + response.getStatusCode());
+            }
 
             if (response.getStatusCode() == Response.OK) {
                 //REGISTER
@@ -1835,338 +1689,273 @@ if (false) {
                 else if (method.equals(Request.CANCEL)) {
                     callProcessing.processCancelOK(clientTransaction, response);
                 }
-            }
-
-	    //SESSION_PROGRESS
+            } //SESSION_PROGRESS
             else if (response.getStatusCode() == Response.SESSION_PROGRESS) {
-		/*
-		 * This is a workaround for a problem which occurs when calling
-		 * some AT&T phone numbers.  AT&T does not appear to always send
-		 * a connect message so we never get an OK.  
-		 * For now we treat SESSION_PROGRESS as OK.
-		 */
+                /*
+                 * This is a workaround for a problem which occurs when calling
+                 * some AT&T phone numbers.  AT&T does not appear to always send
+                 * a connect message so we never get an OK.  
+                 * For now we treat SESSION_PROGRESS as OK.
+                 */
                 if (method.equals(Request.INVITE)) {
-            	    ToHeader to = (ToHeader) response.getHeader(ToHeader.NAME);
+                    ToHeader to = (ToHeader) response.getHeader(ToHeader.NAME);
 
-            	    Address address = to.getAddress();
+                    Address address = to.getAddress();
 
-            	    String toNumber = address.getURI().toString();
+                    String toNumber = address.getURI().toString();
 
-		    /*
-		     * This is a hack for AT&T numbers which never send OK.
-		     * One in particular is 866-839-8145.
-		     * We look for the prefix 9, 1, and if the number
-		     * starts with 8, we'll treat it specially.
-		     */
-		    String s = Utils.getPreference("com.sun.mc.softphone.sip.SESSION_PROGRESS_IS_OK");
+                    /*
+                     * This is a hack for AT&T numbers which never send OK.
+                     * One in particular is 866-839-8145.
+                     * We look for the prefix 9, 1, and if the number
+                     * starts with 8, we'll treat it specially.
+                     */
+                    String s = Utils.getPreference("com.sun.mc.softphone.sip.SESSION_PROGRESS_IS_OK");
 
-		    if (s == null || s.equalsIgnoreCase("true")) {
-		        /*
-		         * Delay process of session progress.
-		         * If an OK happens to come in before the timer expires
-		         * there's nothing to do.  Otherwise, treat the session progress
-		         * as OK.
-		         */
-			if (Logger.logLevel >= Logger.LOG_INFO) {
-			    Logger.println(
-				"SipManager:  Treating SESSION_PROGRESS as OK");
-			}
-		        new SessionProgressTimer(
-			    clientTransaction, callProcessing, response);
-		    }
-		} else {
+                    if (s == null || s.equalsIgnoreCase("true")) {
+                        /*
+                         * Delay process of session progress.
+                         * If an OK happens to come in before the timer expires
+                         * there's nothing to do.  Otherwise, treat the session progress
+                         * as OK.
+                         */
+                        if (Logger.logLevel >= Logger.LOG_INFO) {
+                            Logger.println(
+                                    "SipManager:  Treating SESSION_PROGRESS as OK");
+                        }
+                        new SessionProgressTimer(
+                                clientTransaction, callProcessing, response);
+                    }
+                } else {
                     fireUnknownMessageReceived(response);
-		}
-            }
-
-            //TRYING
+                }
+            } //TRYING
             else if (response.getStatusCode() == Response.TRYING
-                     //process all provisional responses here
-                     //reported by Les Roger Davis
-                     || response.getStatusCode() / 100 == 1) {
+                    //process all provisional responses here
+                    //reported by Les Roger Davis
+                    || response.getStatusCode() / 100 == 1) {
                 if (method.equals(Request.INVITE)) {
                     callProcessing.processTrying(clientTransaction, response);
-                }
-                //We could also receive a TRYING response to a REGISTER req
+                } //We could also receive a TRYING response to a REGISTER req
                 //bug reports by
                 //Steven Lass <sltemp at comcast.net>
                 //Luis Vazquez <luis at teledata.com.uy>
-                else if(method.equals(Request.REGISTER))
-                {
+                else if (method.equals(Request.REGISTER)) {
                     //do nothing
-                }
-                else {
+                } else {
                     fireUnknownMessageReceived(response);
                 }
-            }
-            //RINGING
+            } //RINGING
             else if (response.getStatusCode() == Response.RINGING) {
                 if (method.equals(Request.INVITE)) {
                     callProcessing.processRinging(clientTransaction, response);
-                }
-                else {
+                } else {
                     fireUnknownMessageReceived(response);
                 }
-            }
-            //NOT_FOUND
+            } //NOT_FOUND
             else if (response.getStatusCode() == Response.NOT_FOUND) {
                 if (method.equals(Request.INVITE)) {
                     callProcessing.processNotFound(clientTransaction, response);
-                }
-                else {
+                } else {
                     fireUnknownMessageReceived(response);
                 }
-            }
-            //NOT_IMPLEMENTED
+            } //NOT_IMPLEMENTED
             else if (response.getStatusCode() == Response.NOT_IMPLEMENTED) {
                 if (method.equals(Request.INVITE)) {
                     registerProcessing.processNotImplemented(clientTransaction,
-                        response);
-                }
-                else if (method.equals(Request.REGISTER)) {
+                            response);
+                } else if (method.equals(Request.REGISTER)) {
                     callProcessing.processNotImplemented(clientTransaction,
-                        response);
-                }
-                else {
+                            response);
+                } else {
                     fireUnknownMessageReceived(response);
                 }
-            }
-            //REQUEST_TERMINATED
+            } //REQUEST_TERMINATED
             else if (response.getStatusCode() == Response.REQUEST_TERMINATED) {
                 callProcessing.processRequestTerminated(clientTransaction,
-                    response);
-            }
-            //BUSY_HERE
+                        response);
+            } //BUSY_HERE
             else if (response.getStatusCode() == Response.BUSY_HERE) {
                 if (method.equals(Request.INVITE)) {
                     callProcessing.processBusyHere(clientTransaction, response);
-                }
-                else {
+                } else {
                     fireUnknownMessageReceived(response);
                 }
-            }
-            //401 UNAUTHORIZED
+            } //401 UNAUTHORIZED
             else if (response.getStatusCode() == Response.UNAUTHORIZED
-                     || response.getStatusCode() == Response.PROXY_AUTHENTICATION_REQUIRED) {
-                if(method.equals(Request.INVITE))
+                    || response.getStatusCode() == Response.PROXY_AUTHENTICATION_REQUIRED) {
+                if (method.equals(Request.INVITE)) {
                     callProcessing.processAuthenticationChallenge(clientTransaction, response);
-                else if(method.equals(Request.REGISTER))
+                } else if (method.equals(Request.REGISTER)) {
                     registerProcessing.processAuthenticationChallenge(clientTransaction, response);
-                else
+                } else {
                     fireUnknownMessageReceived(response);
-            }
-            //Other Errors
+                }
+            } //Other Errors
             else if ( //We'll handle all errors the same way so no individual handling
-                     //is needed
-                     //response.getStatusCode() == Response.NOT_ACCEPTABLE
-                     //|| response.getStatusCode() == Response.SESSION_NOT_ACCEPTABLE
-                     response.getStatusCode() / 100 == 4
-                     )
-            {
-               if (method.equals(Request.INVITE)) {
-                   callProcessing.processCallError(clientTransaction, response);
-               }
-               else {
-                   fireUnknownMessageReceived(response);
-               }
-            }
-            else if (response.getStatusCode() == Response.ACCEPTED) {
+                    //is needed
+                    //response.getStatusCode() == Response.NOT_ACCEPTABLE
+                    //|| response.getStatusCode() == Response.SESSION_NOT_ACCEPTABLE
+                    response.getStatusCode() / 100 == 4) {
+                if (method.equals(Request.INVITE)) {
+                    callProcessing.processCallError(clientTransaction, response);
+                } else {
+                    fireUnknownMessageReceived(response);
+                }
+            } else if (response.getStatusCode() == Response.ACCEPTED) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.ADDRESS_INCOMPLETE) {
+            } else if (response.getStatusCode() == Response.ADDRESS_INCOMPLETE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.ALTERNATIVE_SERVICE) {
+            } else if (response.getStatusCode() == Response.ALTERNATIVE_SERVICE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.AMBIGUOUS) {
+            } else if (response.getStatusCode() == Response.AMBIGUOUS) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.BAD_EVENT) {
+            } else if (response.getStatusCode() == Response.BAD_EVENT) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.BAD_EXTENSION) {
+            } else if (response.getStatusCode() == Response.BAD_EXTENSION) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.BAD_GATEWAY) {
+            } else if (response.getStatusCode() == Response.BAD_GATEWAY) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.BAD_REQUEST) {
+            } else if (response.getStatusCode() == Response.BAD_REQUEST) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.BUSY_EVERYWHERE) {
+            } else if (response.getStatusCode() == Response.BUSY_EVERYWHERE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() ==
-                     Response.CALL_IS_BEING_FORWARDED) {
+            } else if (response.getStatusCode()
+                    == Response.CALL_IS_BEING_FORWARDED) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() ==
-                     Response.CALL_OR_TRANSACTION_DOES_NOT_EXIST) {
+            } else if (response.getStatusCode()
+                    == Response.CALL_OR_TRANSACTION_DOES_NOT_EXIST) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.DECLINE) {
+            } else if (response.getStatusCode() == Response.DECLINE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() ==
-                     Response.DOES_NOT_EXIST_ANYWHERE) {
+            } else if (response.getStatusCode()
+                    == Response.DOES_NOT_EXIST_ANYWHERE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.EXTENSION_REQUIRED) {
+            } else if (response.getStatusCode() == Response.EXTENSION_REQUIRED) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.FORBIDDEN) {
+            } else if (response.getStatusCode() == Response.FORBIDDEN) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.GONE) {
+            } else if (response.getStatusCode() == Response.GONE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.INTERVAL_TOO_BRIEF) {
+            } else if (response.getStatusCode() == Response.INTERVAL_TOO_BRIEF) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.LOOP_DETECTED) {
+            } else if (response.getStatusCode() == Response.LOOP_DETECTED) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.MESSAGE_TOO_LARGE) {
+            } else if (response.getStatusCode() == Response.MESSAGE_TOO_LARGE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.METHOD_NOT_ALLOWED) {
+            } else if (response.getStatusCode() == Response.METHOD_NOT_ALLOWED) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.MOVED_PERMANENTLY) {
+            } else if (response.getStatusCode() == Response.MOVED_PERMANENTLY) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.MOVED_TEMPORARILY) {
+            } else if (response.getStatusCode() == Response.MOVED_TEMPORARILY) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.MULTIPLE_CHOICES) {
+            } else if (response.getStatusCode() == Response.MULTIPLE_CHOICES) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.NOT_ACCEPTABLE_HERE) {
+            } else if (response.getStatusCode() == Response.NOT_ACCEPTABLE_HERE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.PAYMENT_REQUIRED) {
+            } else if (response.getStatusCode() == Response.PAYMENT_REQUIRED) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.QUEUED) {
+            } else if (response.getStatusCode() == Response.QUEUED) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() ==
-                     Response.REQUEST_ENTITY_TOO_LARGE) {
+            } else if (response.getStatusCode()
+                    == Response.REQUEST_ENTITY_TOO_LARGE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.REQUEST_PENDING) {
+            } else if (response.getStatusCode() == Response.REQUEST_PENDING) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.REQUEST_TIMEOUT) {
+            } else if (response.getStatusCode() == Response.REQUEST_TIMEOUT) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.REQUEST_URI_TOO_LONG) {
+            } else if (response.getStatusCode() == Response.REQUEST_URI_TOO_LONG) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.SERVER_INTERNAL_ERROR) {
+            } else if (response.getStatusCode() == Response.SERVER_INTERNAL_ERROR) {
                 if (method.equals(Request.INVITE)) {
                     callProcessing.processRemoteFatalError(clientTransaction, response);
                 } else {
                     fireUnknownMessageReceived(response);
-		}
-            }
-            else if (response.getStatusCode() == Response.SERVER_TIMEOUT) {
+                }
+            } else if (response.getStatusCode() == Response.SERVER_TIMEOUT) {
                 if (method.equals(Request.INVITE)) {
                     callProcessing.processRemoteFatalError(clientTransaction, response);
-		} else {
+                } else {
                     fireUnknownMessageReceived(response);
-		}
-            }
-            else if (response.getStatusCode() == Response.SERVICE_UNAVAILABLE) {
+                }
+            } else if (response.getStatusCode() == Response.SERVICE_UNAVAILABLE) {
                 if (method.equals(Request.INVITE)) {
                     callProcessing.processRemoteFatalError(clientTransaction, response);
-		} else {
+                } else {
                     fireUnknownMessageReceived(response);
-		}
-            }
-            else if (response.getStatusCode() ==
-                     Response.SESSION_NOT_ACCEPTABLE) {
+                }
+            } else if (response.getStatusCode()
+                    == Response.SESSION_NOT_ACCEPTABLE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() ==
-                     Response.TEMPORARILY_UNAVAILABLE) {
+            } else if (response.getStatusCode()
+                    == Response.TEMPORARILY_UNAVAILABLE) {
 
                 if (method.equals(Request.INVITE)) {
                     callProcessing.processRemoteFatalError(clientTransaction, response);
-		} else {
+                } else {
                     fireUnknownMessageReceived(response);
-		}
-            }
-            else if (response.getStatusCode() == Response.TOO_MANY_HOPS) {
+                }
+            } else if (response.getStatusCode() == Response.TOO_MANY_HOPS) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.UNDECIPHERABLE) {
+            } else if (response.getStatusCode() == Response.UNDECIPHERABLE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() ==
-                     Response.UNSUPPORTED_MEDIA_TYPE) {
+            } else if (response.getStatusCode()
+                    == Response.UNSUPPORTED_MEDIA_TYPE) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() ==
-                     Response.UNSUPPORTED_URI_SCHEME) {
+            } else if (response.getStatusCode()
+                    == Response.UNSUPPORTED_URI_SCHEME) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.USE_PROXY) {
+            } else if (response.getStatusCode() == Response.USE_PROXY) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
-            }
-            else if (response.getStatusCode() == Response.VERSION_NOT_SUPPORTED) {
+            } else if (response.getStatusCode() == Response.VERSION_NOT_SUPPORTED) {
                 /** @todo add proper request handling */
                 fireUnknownMessageReceived(response);
             } else if (response.getStatusCode() > 400) {
-               if (method.equals(Request.INVITE)) {
-                   callProcessing.processCallError(clientTransaction, response);
-               }
-               else {
-                   fireUnknownMessageReceived(response);
-               }
-	    }
-            else { //We couldn't recognise the message
+                if (method.equals(Request.INVITE)) {
+                    callProcessing.processCallError(clientTransaction, response);
+                } else {
+                    fireUnknownMessageReceived(response);
+                }
+            } else { //We couldn't recognise the message
                 fireUnknownMessageReceived(response);
             }
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     } //process response
@@ -2178,87 +1967,83 @@ if (false) {
     }
 
     public void processIOException(IOExceptionEvent event) {
-	Logger.println("ProcessIOException event:  " + event);
+        Logger.println("ProcessIOException event:  " + event);
     }
 
-    private void checkIfStarted() throws CommunicationsException
-    {
+    private void checkIfStarted() throws CommunicationsException {
         if (!isStarted) {
             console.error("attempt to use the stack while not started");
             throw new CommunicationsException(
-                "The underlying SIP Stack had not been"
-                + "properly initialised! Impossible to continue");
+                    "The underlying SIP Stack had not been"
+                    + "properly initialised! Impossible to continue");
         }
     }
 
     public void sendServerInternalError(int callID) throws
-        CommunicationsException
-    {
+            CommunicationsException {
         try {
             console.logEntry();
             checkIfStarted();
             callProcessing.sayInternalError(callID);
-        }
-        finally {
+        } finally {
             console.logExit();
         }
     }
 
     class SessionProgressTimer extends Thread {
 
-	ClientTransaction clientTransaction;
-	CallProcessing callProcessing;
-	Response response;
+        ClientTransaction clientTransaction;
+        CallProcessing callProcessing;
+        Response response;
 
-	public SessionProgressTimer(ClientTransaction clientTransaction,
-	    CallProcessing callProcessing, Response response) {
+        public SessionProgressTimer(ClientTransaction clientTransaction,
+                CallProcessing callProcessing, Response response) {
 
-	    this.clientTransaction = clientTransaction;
-	    this.callProcessing = callProcessing;
-	    this.response = response;
+            this.clientTransaction = clientTransaction;
+            this.callProcessing = callProcessing;
+            this.response = response;
 
-	    start();
-	}
+            start();
+        }
 
-	public void run() {
-	    try {
-		Thread.sleep(1000);	// wait a second
-	    } catch (InterruptedException e) {
-	    }
+        public void run() {
+            try {
+                Thread.sleep(1000);	// wait a second
+            } catch (InterruptedException e) {
+            }
 
             callProcessing.processInviteSessionProgress(clientTransaction, response);
-	}
+        }
     }
 
     class DelayedInviteProcessor extends Thread {
 
-	ServerTransaction serverTransaction;
-	Request request;
+        ServerTransaction serverTransaction;
+        Request request;
 
-	public DelayedInviteProcessor(ServerTransaction serverTransAction,
-	    Request request) {
+        public DelayedInviteProcessor(ServerTransaction serverTransAction,
+                Request request) {
 
-	    this.serverTransaction = serverTransaction;
-	    this.request = request;
+            this.serverTransaction = serverTransaction;
+            this.request = request;
 
-	    start();
-	}
+            start();
+        }
 
-	public void run() {
-	    getPublicAddress();	// wait until we have our public address
+        public void run() {
+            getPublicAddress();	// wait until we have our public address
 
-	    Logger.println("Processing delayed invite");
+            Logger.println("Processing delayed invite");
 
-	    if (serverTransaction.getDialog().getState() == null) {
+            if (serverTransaction.getDialog().getState() == null) {
                 callProcessing.processInvite(serverTransaction, request);
             } else {
                 callProcessing.processReInvite(serverTransaction, request);
             }
 
-	    synchronized (registerProcessing) {
-	        delayedInviteProcessor = null;
-	    }
-	}
+            synchronized (registerProcessing) {
+                delayedInviteProcessor = null;
+            }
+        }
     }
-
 }

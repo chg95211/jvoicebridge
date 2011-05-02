@@ -90,7 +90,7 @@ import java.io.IOException;
  *
  */
 public class NewGuiManager implements GuiManagerUI, GuiCallback,
-	WindowListener {
+        WindowListener {
 
     private static Console console = Console.getConsole(NewGuiManager.class);
     //Global status codes
@@ -98,38 +98,27 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     public static final String UNREGISTERING = "Unregistering, please wait!";
     public static final String REGISTERING = "Trying to register as:";
     public static final String REGISTERED = "Registered as ";
-
-    private NewPhoneFrame   phoneFrame   = null;
-    private ConfigFrame     configFrame  = null;
-    private LineTestConfig  lineTestConfig = null;
-    private NetworkInterfaceConfig  networkInterfaceConfig = null;
-    private ArrayList       listeners    = null;
-    private AlertManager    alertManager = null;
-    private Properties      properties;
-    private JLabel          logoLabel    = null;
-    private Lines           interlocutors= null;
-
+    private NewPhoneFrame phoneFrame = null;
+    public static NewPhoneFrame newPhoneFrame = null;
+    private ConfigFrame configFrame = null;
+    private LineTestConfig lineTestConfig = null;
+    private NetworkInterfaceConfig networkInterfaceConfig = null;
+    private ArrayList listeners = null;
+    private AlertManager alertManager = null;
+    private Properties properties;
+    private JLabel logoLabel = null;
+    private Lines interlocutors = null;
     //Set default colors
     // static Color defaultBackground = new Color(255, 255, 255);
-
     private AuthenticationSplash authenticationSplash = null;
-
     private HistorySplash historySplash = null;
-
     private RecordDialog recordDialog = null;
-
     private PlaybackDialog playbackDialog = null;
-
     private PerfMonDialog perfMonDialog = null;
-
     private TestUDPFrame testUDPFrame = null;
-
     private Process audioControlProcess = null;
-
     private VolumeControl volumeControl = null;
-
     private LpfControl lpfControl = null;
-
     private LpfSliderControl lpfSliderControl = null;
 
     /*
@@ -139,61 +128,71 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     private OnControl onControl = null;
 
     public NewGuiManager(Boolean visibleUI) {
-	//if (visibleUI.booleanValue()) {
-            initLookAndFeel();
-	//}
+        //if (visibleUI.booleanValue()) {
+        initLookAndFeel();
+        //}
 
         //create actions first for they are used by others
 
-	phoneFrame    = new NewPhoneFrame(this);
-	configFrame   = new ConfigFrame();
+        phoneFrame = new NewPhoneFrame(this);
+        newPhoneFrame = phoneFrame;
+        configFrame = new ConfigFrame();
 
-	listeners     = new ArrayList();
-	alertManager  = new AlertManager();
+        listeners = new ArrayList();
+        alertManager = new AlertManager();
 
-        logoLabel     = new JLabel();
+        logoLabel = new JLabel();
         interlocutors = new Lines();
         // interlocutors = new InterlocutorsTableModel();
 
         initActionListeners();
- 	( (MenuBar) phoneFrame.jMenuBar1).addConfigCallAction(new ConfigAction());
- 	( (MenuBar) phoneFrame.jMenuBar1).addAudioQualityAction(new AudioQualityAction());
- 	( (MenuBar) phoneFrame.jMenuBar1).addPhoneAction(new PhoneAction());
- 	( (MenuBar) phoneFrame.jMenuBar1).addVPNAction(new VPNAction());
- 	( (MenuBar) phoneFrame.jMenuBar1).addCDAction(new CDAction());
- 	( (MenuBar) phoneFrame.jMenuBar1).addCustomAction(new CustomAction());
- 	( (MenuBar) phoneFrame.jMenuBar1).addVolumeCallAction(new VolumeAction());
- 	( (MenuBar) phoneFrame.jMenuBar1).addAudioCallAction(new AudioAction());
- 	//( (MenuBar) phoneFrame.jMenuBar1).addOnAction(new OnAction());
- 	//( (MenuBar) phoneFrame.jMenuBar1).addThreshAction(new ThreshAction());
- 	//( (MenuBar) phoneFrame.jMenuBar1).addLpfAction(new LpfAction());
- 	//( (MenuBar) phoneFrame.jMenuBar1).addLpfSliderAction(new LpfSliderAction());
-	( (MenuBar) phoneFrame.jMenuBar1).addHistoryAction(new HistoryAction());
-	( (MenuBar) phoneFrame.jMenuBar1).addRecordAction(new RecordAction());
-	( (MenuBar) phoneFrame.jMenuBar1).addPlaybackAction(new PlaybackAction());
-	( (MenuBar) phoneFrame.jMenuBar1).addPerfMonAction(new PerfMonAction());
-	( (MenuBar) phoneFrame.jMenuBar1).addTestUDPAction(new TestUDPAction());
-	( (MenuBar) phoneFrame.jMenuBar1).addExitCallAction(new ExitAction());
-	configFrame.setLocationRelativeTo(phoneFrame);
+        ((MenuBar) phoneFrame.jMenuBar1).addConfigCallAction(new ConfigAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addAudioQualityAction(new AudioQualityAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addPhoneAction(new PhoneAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addVPNAction(new VPNAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addCDAction(new CDAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addCustomAction(new CustomAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addVolumeCallAction(new VolumeAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addAudioCallAction(new AudioAction());
+        //( (MenuBar) phoneFrame.jMenuBar1).addOnAction(new OnAction());
+        //( (MenuBar) phoneFrame.jMenuBar1).addThreshAction(new ThreshAction());
+        //( (MenuBar) phoneFrame.jMenuBar1).addLpfAction(new LpfAction());
+        //( (MenuBar) phoneFrame.jMenuBar1).addLpfSliderAction(new LpfSliderAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addHistoryAction(new HistoryAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addRecordAction(new RecordAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addPlaybackAction(new PlaybackAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addPerfMonAction(new PerfMonAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addTestUDPAction(new TestUDPAction());
+        ((MenuBar) phoneFrame.jMenuBar1).addExitCallAction(new ExitAction());
+        configFrame.setLocationRelativeTo(phoneFrame);
         //phoneFrame.participantsTable.setModel(interlocutors);
         phoneFrame.setIconImage(new ImageIcon(Utils.getResource("sip-communicator-16x16.jpg")).getImage());
         logoLabel.setIcon(new ImageIcon(Utils.getResource("sip-communicator.jpg")));
         setGlobalStatus(NOT_REGISTERED, "");
         JOptionPane.setRootFrame(phoneFrame);
     }
-    
+
+    /**
+     * @author: Damir Kusar
+     * @version: 0.2
+     * This method returns the boolean if the wanCheckBox is selected or not.
+     * @return boolean. Is the wanCheckbox selected or not.
+     */
+    public static boolean isWanCheckboxSelected() {
+        return newPhoneFrame.wanCheckbox.isSelected();
+    }
+
     public void addConfigMenuItem(Action action) {
-        ((MenuBar)phoneFrame.jMenuBar1).settingsMenu.add(action);
+        ((MenuBar) phoneFrame.jMenuBar1).settingsMenu.add(action);
     }
 
     private static void initLookAndFeel() {
         MetalLookAndFeel mlf = new MetalLookAndFeel();
-        mlf.setCurrentTheme( new SipCommunicatorColorTheme());
+        mlf.setCurrentTheme(new SipCommunicatorColorTheme());
 
         try {
             UIManager.setLookAndFeel(mlf);
-        }
-        catch (UnsupportedLookAndFeelException ex) {
+        } catch (UnsupportedLookAndFeelException ex) {
             console.error("Failed to se custom look and feel", ex);
         }
     }
@@ -201,30 +200,29 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     public void showConfigFrame() {
         new ConfigurationFrame();
         //configFrame.pack();
-	//configFrame.setVisible(true);
+        //configFrame.setVisible(true);
     }
 
     public void showPhoneFrame(boolean show) {
-	if (show == true) {
+        if (show == true) {
             phoneFrame.setVisible(true);
-	    phoneFrame.toFront();
+            phoneFrame.toFront();
 
-	    if (Utils.isJdk14() == false) {
-	        phoneFrame.setAlwaysOnTop(true);
-	        phoneFrame.setAlwaysOnTop(false);
-	    }
+            if (Utils.isJdk14() == false) {
+                phoneFrame.setAlwaysOnTop(true);
+                phoneFrame.setAlwaysOnTop(false);
+            }
 
             phoneFrame.contactBox.grabFocus();
-	} else {
+        } else {
             phoneFrame.setVisible(false);
-	}
+        }
     }
 
     public void addVisualComponent(Component vComp) {
         if (vComp == null) {
             return;
-        }
-        else {
+        } else {
         }
     }
 
@@ -241,15 +239,15 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
 
 //System.out.println("NewGuiManager.addInterlocutor: "+interlocutor.getID());
         interlocutor.setCallback(this);
-        int inter=interlocutors.addInterlocutor(interlocutor);
-        if(inter>=0) {
+        int inter = interlocutors.addInterlocutor(interlocutor);
+        if (inter >= 0) {
             update(interlocutor);
         } else {
             // no available lines
             UserCallControlEvent commEvt = new UserCallControlEvent(interlocutor);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (UserActionListener) listeners.get(i)).handleHangupRequest(
-                    commEvt);
+                ((UserActionListener) listeners.get(i)).handleHangupRequest(
+                        commEvt);
             }
         }
     }
@@ -270,51 +268,57 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     public void setPhoneNumber(String phoneNumber) {
-	phoneFrame.contactBox.setText(phoneNumber);
+        phoneFrame.contactBox.setText(phoneNumber);
         phoneFrame.contactBox.setToolTipText(phoneNumber);
     }
 
 //-------------------------- GuiCallback --------------------
     public void update(InterlocutorUI interlocutorUI) {
-        String state=interlocutorUI.getCallState();
-        String error=interlocutorUI.getCallError();
-        int index=interlocutors.findIndex(interlocutorUI.getID());
-        if(index==-1) {
+        String state = interlocutorUI.getCallState();
+        String error = interlocutorUI.getCallError();
+        int index = interlocutors.findIndex(interlocutorUI.getID());
+        if (index == -1) {
             return;
         }
 
-        if(Call.DISCONNECTED.equals(state)) {
-            if(!phoneFrame.isLineConnected(index)) {
-                if(historySplash==null) {
-                    historySplash=new HistorySplash(phoneFrame,true);
+        if (Call.DISCONNECTED.equals(state)) {
+            if (!phoneFrame.isLineConnected(index)) {
+                if (historySplash == null) {
+                    historySplash = new HistorySplash(phoneFrame, true);
                 }
                 historySplash.addMissedNumber(interlocutorUI.getAddress());
             }
-            phoneFrame.setLineConnected(index,false);
+            phoneFrame.setLineConnected(index, false);
             phoneFrame.muted(false);
-        } if(Call.DIALING.equals(state)) {
-            phoneFrame.setLineConnected(index,true);
-        } if(Call.RINGING.equals(state)) {
-            phoneFrame.setLineConnected(index,true);
-        } if(Call.BUSY.equals(state)) {
-            phoneFrame.setLineConnected(index,false);
-        } if(Call.FAILED.equals(state)) {
-            phoneFrame.setLineConnected(index,false);
-        } if(Call.ALERTING.equals(state)) {
+        }
+        if (Call.DIALING.equals(state)) {
+            phoneFrame.setLineConnected(index, true);
+        }
+        if (Call.RINGING.equals(state)) {
+            phoneFrame.setLineConnected(index, true);
+        }
+        if (Call.BUSY.equals(state)) {
+            phoneFrame.setLineConnected(index, false);
+        }
+        if (Call.FAILED.equals(state)) {
+            phoneFrame.setLineConnected(index, false);
+        }
+        if (Call.ALERTING.equals(state)) {
             phoneFrame.setLineAlerting(index);
-            if(phoneFrame.getSelectedLine()==index) {
-                phoneFrame.contactBox.setText(interlocutorUI.getAddress());
-                phoneFrame.contactBox.setToolTipText(interlocutorUI.getAddress());
-            }
-        } if(Call.CONNECTED.equals(state)) {
-            phoneFrame.setLineConnected(index,true);
-            if(phoneFrame.getSelectedLine()==index) {
+            if (phoneFrame.getSelectedLine() == index) {
                 phoneFrame.contactBox.setText(interlocutorUI.getAddress());
                 phoneFrame.contactBox.setToolTipText(interlocutorUI.getAddress());
             }
         }
-        if(Call.FAILED.equals(state)) {
-            setCallStatus(state+": "+error);
+        if (Call.CONNECTED.equals(state)) {
+            phoneFrame.setLineConnected(index, true);
+            if (phoneFrame.getSelectedLine() == index) {
+                phoneFrame.contactBox.setText(interlocutorUI.getAddress());
+                phoneFrame.contactBox.setToolTipText(interlocutorUI.getAddress());
+            }
+        }
+        if (Call.FAILED.equals(state)) {
+            setCallStatus(state + ": " + error);
         } else {
             setCallStatus(state);
         }
@@ -330,8 +334,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     public void startAlert(String alertResourceName) {
         try {
             alertManager.startAlert(alertResourceName);
-        }
-        catch (Throwable ex) {
+        } catch (Throwable ex) {
             //OK, no one cares really
             console.warn("Couldn't play alert", ex);
         }
@@ -340,8 +343,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     public void stopAlert(String alertResourceName) {
         try {
             alertManager.stopAlert(alertResourceName);
-        }
-        catch (Throwable ex) {
+        } catch (Throwable ex) {
             //OK, no one cares really
             console.warn("Couldn't stop alert", ex);
         }
@@ -350,17 +352,17 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     //----------- DTMF
     public boolean startDtmf(String key) {
         //System.out.println("GuiManager.startDtmf");
-        int selectedRow=phoneFrame.getSelectedLine();
+        int selectedRow = phoneFrame.getSelectedLine();
         if (selectedRow < 0 || selectedRow > interlocutors.getRowCount() - 1) {
             return false;
         }
         InterlocutorUI inter = interlocutors.getInterlocutorAt(selectedRow);
-        if(inter==null) {
+        if (inter == null) {
             return false;
         }
-        UserDtmfEvent dtmfEvt = new UserDtmfEvent(inter,true,key);
+        UserDtmfEvent dtmfEvt = new UserDtmfEvent(inter, true, key);
         for (int i = listeners.size() - 1; i >= 0; i--) {
-            ( (UserActionListener) listeners.get(i)).handleDtmfRequest(dtmfEvt);
+            ((UserActionListener) listeners.get(i)).handleDtmfRequest(dtmfEvt);
         }
         phoneFrame.contactBox.grabFocus();
         return true;
@@ -368,17 +370,17 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
 
     public boolean stopDtmf(String key) {
         //System.out.println("GuiManager.stopDtmf");
-        int selectedRow=phoneFrame.getSelectedLine();
+        int selectedRow = phoneFrame.getSelectedLine();
         if (selectedRow < 0 || selectedRow > interlocutors.getRowCount() - 1) {
             return false;
         }
         InterlocutorUI inter = interlocutors.getInterlocutorAt(selectedRow);
-        if(inter==null) {
+        if (inter == null) {
             return false;
         }
-        UserDtmfEvent dtmfEvt = new UserDtmfEvent(inter,false,key);
+        UserDtmfEvent dtmfEvt = new UserDtmfEvent(inter, false, key);
         for (int i = listeners.size() - 1; i >= 0; i--) {
-            ( (UserActionListener) listeners.get(i)).handleDtmfRequest(dtmfEvt);
+            ((UserActionListener) listeners.get(i)).handleDtmfRequest(dtmfEvt);
         }
         phoneFrame.contactBox.grabFocus();
         return true;
@@ -398,28 +400,28 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
             return;
         }
 
-        int selectedRow=phoneFrame.getSelectedLine();
+        int selectedRow = phoneFrame.getSelectedLine();
         if (selectedRow < 0 || selectedRow > interlocutors.getRowCount() - 1) {
             phoneFrame.contactBox.grabFocus();
             return;
         }
         InterlocutorUI inter = interlocutors.getInterlocutorAt(selectedRow);
-        if(inter!=null) {
+        if (inter != null) {
             // line in use
             phoneFrame.contactBox.grabFocus();
             return;
         }
-	
-        if(historySplash==null) {
-            historySplash=new HistorySplash(phoneFrame,true);
+
+        if (historySplash == null) {
+            historySplash = new HistorySplash(phoneFrame, true);
         }
         historySplash.addDialedNumber(callee);
 
-	callee = format(callee);
+        callee = format(callee);
 
         UserCallInitiationEvent commEvt = new UserCallInitiationEvent(callee);
         for (int i = listeners.size() - 1; i >= 0; i--) {
-            ( (UserActionListener) listeners.get(i)).handleDialRequest(commEvt);
+            ((UserActionListener) listeners.get(i)).handleDialRequest(commEvt);
         }
 
         phoneFrame.contactBox.grabFocus();
@@ -428,17 +430,17 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     void hangupButton_actionPerformed(ActionEvent evt) {
         //TODO temporarily close alerts from here.
         alertManager.stopAllAlerts();
-        int selectedRow=phoneFrame.getSelectedLine();
+        int selectedRow = phoneFrame.getSelectedLine();
         if (selectedRow < 0 || selectedRow > interlocutors.getRowCount() - 1) {
             phoneFrame.contactBox.grabFocus();
             return;
         }
         InterlocutorUI inter = interlocutors.getInterlocutorAt(selectedRow);
-        if(inter!=null) {
+        if (inter != null) {
             UserCallControlEvent commEvt = new UserCallControlEvent(inter);
             for (int i = listeners.size() - 1; i >= 0; i--) {
-                ( (UserActionListener) listeners.get(i)).handleHangupRequest(
-                    commEvt);
+                ((UserActionListener) listeners.get(i)).handleHangupRequest(
+                        commEvt);
             }
         }
         //phoneFrame.contactBox.setText("");
@@ -451,60 +453,60 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
 
         alertManager.stopAllAlerts();
 
-        int selectedRow=phoneFrame.getSelectedLine();
+        int selectedRow = phoneFrame.getSelectedLine();
         if (selectedRow < 0 || selectedRow > interlocutors.getRowCount() - 1) {
             phoneFrame.contactBox.grabFocus();
             return;
         }
         InterlocutorUI inter = interlocutors.getInterlocutorAt(selectedRow);
-        if(inter==null) {
+        if (inter == null) {
             phoneFrame.contactBox.grabFocus();
             return;
         }
 
 
-        if(historySplash==null) {
-            historySplash=new HistorySplash(phoneFrame,true);
+        if (historySplash == null) {
+            historySplash = new HistorySplash(phoneFrame, true);
         }
         historySplash.addReceivedNumber(inter.getAddress());
-        
+
         UserCallControlEvent commEvt = new UserCallControlEvent(inter);
         for (int i = listeners.size() - 1; i >= 0; i--) {
-            ( (UserActionListener) listeners.get(i)).handleAnswerRequest(
-                commEvt);
+            ((UserActionListener) listeners.get(i)).handleAnswerRequest(
+                    commEvt);
         }
         phoneFrame.contactBox.grabFocus();
     }
 
     void muteButton_actionPerformed(ActionEvent evt) {
-        int selectedRow=phoneFrame.getSelectedLine();
+        int selectedRow = phoneFrame.getSelectedLine();
         if (selectedRow < 0 || selectedRow > interlocutors.getRowCount() - 1) {
             phoneFrame.contactBox.grabFocus();
             return;
         }
         InterlocutorUI inter = interlocutors.getInterlocutorAt(selectedRow);
-        if(inter==null) {
+        if (inter == null) {
             phoneFrame.contactBox.grabFocus();
             return;
         }
 
         UserCallControlEvent commEvt = new UserCallControlEvent(inter);
         for (int i = listeners.size() - 1; i >= 0; i--) {
-            ( (UserActionListener) listeners.get(i)).handleMuteRequest(
-                commEvt);
+            ((UserActionListener) listeners.get(i)).handleMuteRequest(
+                    commEvt);
         }
         phoneFrame.contactBox.grabFocus();
     }
 
     void fireExitRequest() {
         for (int i = listeners.size() - 1; i >= 0; i--) {
-            ( (UserActionListener) listeners.get(i)).handleExitRequest();
+            ((UserActionListener) listeners.get(i)).handleExitRequest();
         }
     }
 
     void fireDebugToolLaunchRequest() {
         for (int i = listeners.size() - 1; i >= 0; i--) {
-            ( (UserActionListener) listeners.get(i)).handleDebugToolLaunch();
+            ((UserActionListener) listeners.get(i)).handleDebugToolLaunch();
         }
     }
 
@@ -513,23 +515,23 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
      * Add prefixes to phone number, strip out extraneous characters
      */
     private String format(String callee) {
-	/*
-	 * It's a softphone number.  Leave it as is.
-	 */
-	if (callee.indexOf("sip:") == 0 || callee.indexOf("sips:") == 0) {
-	    return callee;
-	}
+        /*
+         * It's a softphone number.  Leave it as is.
+         */
+        if (callee.indexOf("sip:") == 0 || callee.indexOf("sips:") == 0) {
+            return callee;
+        }
 
-	if (callee.indexOf("@") > 0) {
-	    /*
-	     * It must be a sip number but the user left off sip:
-	     */
-	    return "sip:" + callee;
-	}
+        if (callee.indexOf("@") > 0) {
+            /*
+             * It must be a sip number but the user left off sip:
+             */
+            return "sip:" + callee;
+        }
 
         /*
          * Get rid of white space in the phone number
-         */ 
+         */
         callee = callee.replaceAll("\\s", "");
 
         /*
@@ -537,66 +539,66 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
          */
         callee = callee.replaceAll("-", "");
 
-	if (callee.length() == 0) {
-	    return null;
-	}
+        if (callee.length() == 0) {
+            return null;
+        }
 
-	/*
-	 * If the communicator is running standalone, leave the phone number as is.
-	 */
-	if (!SipCommunicator.getInstance().fromMC()) {
-	    return callee;
-	}
-	
         /*
-	 * Sip communicator is running with Meeting Central.
-	 * Prepend the phone number with the right prefixes.
-	 *
+         * If the communicator is running standalone, leave the phone number as is.
+         */
+        if (!SipCommunicator.getInstance().fromMC()) {
+            return callee;
+        }
+
+        /*
+         * Sip communicator is running with Meeting Central.
+         * Prepend the phone number with the right prefixes.
+         *
          * Replace leading "+" (from namefinder) with appropriate numbers.
          * +1 is a US number and becomes 91.
          * +<anything else> is considered to be an international number and 
-	 * becomes 9011.
+         * becomes 9011.
          */
         if (callee.charAt(0) == '+') {
             if (callee.charAt(1) == '1') {
                 callee = "9" + callee.substring(1);
             } else {
                 callee = "9011" + callee.substring(1);
-	    }
-        } else if (callee.charAt(0) == 'x' ||
-	        callee.charAt(0) == 'X') {
+            }
+        } else if (callee.charAt(0) == 'x'
+                || callee.charAt(0) == 'X') {
 
-	    callee = callee.substring(1);
-	}
+            callee = callee.substring(1);
+        }
 
         if (callee.length() > 7) {
             /*
              * it's an outside number
              */
             if (callee.length() == 10) {
-		callee = "91-" + callee;
+                callee = "91-" + callee;
             } else if (callee.charAt(0) != '9') {
                 if (callee.length() <= 11) {
-        	    /*
+                    /*
                      * It's US or Canada, number needs 91.
-                     */ 
+                     */
                     if (callee.charAt(0) == '1') {
                         callee = "9-" + callee;
                     } else {
                         callee = "91-" + callee;
-		    }
+                    }
                 } else {
                     /*
                      * It's international, number needs 9011
-                     */ 
-		    if (callee.substring(0,3).equals("011")) {
-			/*
+                     */
+                    if (callee.substring(0, 3).equals("011")) {
+                        /*
                          * 011 is already there, just prepend 9
                          */
                         callee = "9-" + callee;
-		    } else {
+                    } else {
                         callee = "9011-" + callee;
-		    }
+                    }
                 }
             }
         }
@@ -616,8 +618,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
             configFrame.propertiesTable.getCellEditor().stopCellEditing();
         }
         for (int i = listeners.size() - 1; i >= 0; i--) {
-            ( (UserActionListener) listeners.get(i)).
-                handlePropertiesSaveRequest();
+            ((UserActionListener) listeners.get(i)).handlePropertiesSaveRequest();
         }
         configFrame.dispose();
     }
@@ -625,40 +626,35 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     public void setGlobalStatus(String statusCode, String reason) {
         if (statusCode == REGISTERED) {
             phoneFrame.registrationStatus.setForeground(SipCommunicatorColorTheme.REGISTERED);
-	    int ix;
-	    if ((ix = reason.indexOf(";")) != -1) {
-		reason = reason.substring(0, ix) + ">";
-	    }
+            int ix;
+            if ((ix = reason.indexOf(";")) != -1) {
+                reason = reason.substring(0, ix) + ">";
+            }
             //phoneFrame.registrationStatus.setText(statusCode+" "+reason);
             //phoneFrame.registrationStatus.setToolTipText(statusCode+" "+reason);
-	    if ((ix = reason.indexOf("<")) != -1) {
-		reason = reason.substring(ix + 1);
+            if ((ix = reason.indexOf("<")) != -1) {
+                reason = reason.substring(ix + 1);
 
-	        if ((ix = reason.indexOf(">")) != -1) {
-		    reason = reason.substring(0, ix);
-		}
-	    }
-		
+                if ((ix = reason.indexOf(">")) != -1) {
+                    reason = reason.substring(0, ix);
+                }
+            }
+
             phoneFrame.registrationStatus.setText(reason);
             phoneFrame.registrationStatus.setToolTipText(reason);
-        }
-        else if (statusCode == REGISTERING) {
+        } else if (statusCode == REGISTERING) {
             phoneFrame.registrationStatus.setForeground(SipCommunicatorColorTheme.REGISTERING);
-            phoneFrame.registrationStatus.setText(statusCode+" "+reason);
-            phoneFrame.registrationStatus.setToolTipText(statusCode+" "+reason);
-        }
-        else if (statusCode == NOT_REGISTERED) {
+            phoneFrame.registrationStatus.setText(statusCode + " " + reason);
+            phoneFrame.registrationStatus.setToolTipText(statusCode + " " + reason);
+        } else if (statusCode == NOT_REGISTERED) {
             phoneFrame.registrationStatus.setForeground(SipCommunicatorColorTheme.NOT_REGISTERED);
             phoneFrame.registrationStatus.setText(reason);
             phoneFrame.registrationStatus.setToolTipText(reason);
-        }
-        else if (statusCode == UNREGISTERING)
-        {
+        } else if (statusCode == UNREGISTERING) {
             phoneFrame.registrationStatus.setForeground(SipCommunicatorColorTheme.NOT_REGISTERED);
             phoneFrame.registrationStatus.setText(statusCode + " " + reason);
             phoneFrame.registrationStatus.setToolTipText(statusCode + " " + reason);
-        }
-        else {
+        } else {
             phoneFrame.registrationStatus.setForeground(Color.red);
             phoneFrame.registrationStatus.setText(statusCode);
             phoneFrame.registrationStatus.setToolTipText(statusCode);
@@ -670,22 +666,20 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
 //===================================== Action classes ===============================
-
     private class HistoryAction extends AbstractAction {
-
 
         public HistoryAction() {
             super("History");
         }
 
         public void actionPerformed(ActionEvent evt) {
-            if(historySplash==null) {
-                historySplash=new HistorySplash(phoneFrame,true);
+            if (historySplash == null) {
+                historySplash = new HistorySplash(phoneFrame, true);
             }
 
             historySplash.setVisible(true);
 
-            if(historySplash.getNumber()!=null) {
+            if (historySplash.getNumber() != null) {
                 phoneFrame.contactBox.setText(historySplash.getNumber());
                 phoneFrame.contactBox.setToolTipText(historySplash.getNumber());
             }
@@ -694,12 +688,13 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     private class RecordAction extends AbstractAction {
+
         public RecordAction() {
             super("Record");
         }
 
         public void actionPerformed(ActionEvent evt) {
-            if(recordDialog == null) {
+            if (recordDialog == null) {
                 recordDialog = new RecordDialog(phoneFrame, true);
             }
 
@@ -708,6 +703,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     private class PlaybackAction extends AbstractAction {
+
         public PlaybackAction() {
             super("Playback");
         }
@@ -722,6 +718,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     private class PerfMonAction extends AbstractAction {
+
         public PerfMonAction() {
             super("Perf Monitor");
         }
@@ -731,11 +728,12 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
                 perfMonDialog = new PerfMonDialog();
             }
 
-	    perfMonDialog.setVisible(true);
+            perfMonDialog.setVisible(true);
         }
     }
 
     private class TestUDPAction extends AbstractAction {
+
         public TestUDPAction() {
             super("Test UDP");
         }
@@ -745,11 +743,12 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
                 testUDPFrame = new TestUDPFrame();
             }
 
-	    testUDPFrame.setVisible(true);
+            testUDPFrame.setVisible(true);
         }
     }
 
     private class ExitAction extends AbstractAction {
+
         public ExitAction() {
             super("Exit");
         }
@@ -760,6 +759,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     private class ConfigAction extends AbstractAction {
+
         public ConfigAction() {
             super("Configure");
         }
@@ -771,6 +771,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     private class AudioQualityAction extends AbstractAction {
+
         public AudioQualityAction() {
             super("Audio Quality");
         }
@@ -780,91 +781,96 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     private class PhoneAction extends AbstractAction {
+
         public PhoneAction() {
             super("Phone (8k/mono)");
         }
 
         public void actionPerformed(ActionEvent evt) {
-            ( (MenuBar) phoneFrame.jMenuBar1).setAudioQuality(
-		"8000", "1", "PCMU");
+            ((MenuBar) phoneFrame.jMenuBar1).setAudioQuality(
+                    "8000", "1", "PCMU");
         }
     }
 
     private class VPNAction extends AbstractAction {
+
         public VPNAction() {
             super("VPN (16k/stereo)");
         }
 
         public void actionPerformed(ActionEvent evt) {
-            ( (MenuBar) phoneFrame.jMenuBar1).setAudioQuality(
-		"16000", "2", "PCM");
+            ((MenuBar) phoneFrame.jMenuBar1).setAudioQuality(
+                    "16000", "2", "PCM");
         }
     }
 
     private class CDAction extends AbstractAction {
+
         public CDAction() {
             super("CD (44.1k/stereo)");
         }
 
         public void actionPerformed(ActionEvent evt) {
-            ( (MenuBar) phoneFrame.jMenuBar1).setAudioQuality(
-		"44100", "2", "PCM");
+            ((MenuBar) phoneFrame.jMenuBar1).setAudioQuality(
+                    "44100", "2", "PCM");
         }
     }
 
-    private class CustomAction extends AbstractAction implements 
-	    MediaConfigDoneListener {
+    private class CustomAction extends AbstractAction implements
+            MediaConfigDoneListener {
 
         public CustomAction() {
             super("Custom");
         }
 
         public void actionPerformed(ActionEvent evt) {
-	    MediaConfigurationFrame frame = new MediaConfigurationFrame();
-	   
-	    frame.addListener(this);
+            MediaConfigurationFrame frame = new MediaConfigurationFrame();
+
+            frame.addListener(this);
         }
 
         public void mediaConfigDone(boolean isCancelled) {
-	    ( (MenuBar) phoneFrame.jMenuBar1).selectCustom();
+            ((MenuBar) phoneFrame.jMenuBar1).selectCustom();
         }
     }
 
-
     private class AudioAction extends AbstractAction {
+
         public AudioAction() {
             super("Audio Control");
         }
 
         public void actionPerformed(ActionEvent evt) {
             try {
-		if (LineTestConfig.startAudioConfigTool() == false) {
-		    Logger.println("Unable to start audio config tool for os");
-		}
+                if (LineTestConfig.startAudioConfigTool() == false) {
+                    Logger.println("Unable to start audio config tool for os");
+                }
             } catch (IOException e) {
-		Logger.println("Error trying to start audio config program:  "
-		    + e.getMessage());
+                Logger.println("Error trying to start audio config program:  "
+                        + e.getMessage());
             }
         }
     }
 
     private class VolumeAction extends AbstractAction {
+
         public VolumeAction() {
             super("Volume Control");
         }
 
         public void actionPerformed(ActionEvent evt) {
-            if(volumeControl==null) {
-                volumeControl=new VolumeControl();
+            if (volumeControl == null) {
+                volumeControl = new VolumeControl();
             }
-         
-            if(volumeControl!=null) {
+
+            if (volumeControl != null) {
                 volumeControl.setVisible(true);
             }
         }
     }
 
     private class ThreshAction extends AbstractAction {
+
         public ThreshAction() {
             super("Control offThresh and powerThresholdLimit");
         }
@@ -872,46 +878,49 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
         public void actionPerformed(ActionEvent evt) {
             if (threshControl == null) {
                 threshControl = new ThreshControl(
-		    "Control offThresh and powerThresholdLimit");
-            } 
+                        "Control offThresh and powerThresholdLimit");
+            }
 
-	    threshControl.setVisible(true);	
+            threshControl.setVisible(true);
         }
     }
 
     private class LpfAction extends AbstractAction {
+
         public LpfAction() {
             super("Low Pass Filter Control");
         }
 
         public void actionPerformed(ActionEvent evt) {
             if (lpfControl != null) {
-		lpfControl.setVisible(false);
-	    }
+                lpfControl.setVisible(false);
+            }
 
             lpfControl = new LpfControl(
-		"Control Low Pass Filter and Volume");
-         
+                    "Control Low Pass Filter and Volume");
+
             lpfControl.setVisible(true);
         }
     }
 
     private class LpfSliderAction extends AbstractAction {
+
         public LpfSliderAction() {
             super("Low Pass Filter Slider Control");
         }
 
         public void actionPerformed(ActionEvent evt) {
             if (lpfSliderControl != null) {
-		lpfSliderControl.setVisible(false);
-	    }
+                lpfSliderControl.setVisible(false);
+            }
 
             lpfSliderControl = new LpfSliderControl();
             lpfSliderControl.setVisible(true);
         }
     }
-    
+
     private class OnAction extends AbstractAction {
+
         public OnAction() {
             super("Control onCount and onThresh");
         }
@@ -919,14 +928,15 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
         public void actionPerformed(ActionEvent evt) {
             if (onControl == null) {
                 onControl = new OnControl(
-		    "Control onThresh and cnThresh");
+                        "Control onThresh and cnThresh");
             }
 
-	    onControl.setVisible(true);
+            onControl.setVisible(true);
         }
     }
 
     private class ShowTracesAction extends AbstractAction {
+
         public ShowTracesAction() {
             super("View Traces");
         }
@@ -937,7 +947,8 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     private void initActionListeners() {
-        ActionListener dialListener = new ActionListener() {
+        ActionListener dialListener = new ActionListener()   {
+
             public void actionPerformed(ActionEvent evt) {
                 dialButton_actionPerformed(evt);
             }
@@ -945,7 +956,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
         phoneFrame.dialButton.addActionListener(dialListener);
 
 
-        MouseAdapter mouseListener = new MouseAdapter() {
+        MouseAdapter mouseListener = new MouseAdapter()   {
 
             public void mouseEntered(MouseEvent event) {
                 phoneFrame.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -956,52 +967,52 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
             }
 
             public void mousePressed(MouseEvent event) {
-                JButton source=(JButton)event.getSource();
-                String button=getButton(source);
-                if(!startDtmf(button)) {
-                    phoneFrame.contactBox.setText(phoneFrame.contactBox.getText()+button);
+                JButton source = (JButton) event.getSource();
+                String button = getButton(source);
+                if (!startDtmf(button)) {
+                    phoneFrame.contactBox.setText(phoneFrame.contactBox.getText() + button);
                     phoneFrame.contactBox.setToolTipText(phoneFrame.contactBox.getText());
                 }
             }
 
             public void mouseReleased(MouseEvent event) {
-                JButton source=(JButton)event.getSource();
-                String button=getButton(source);
-                if(!stopDtmf(button)) {
+                JButton source = (JButton) event.getSource();
+                String button = getButton(source);
+                if (!stopDtmf(button)) {
                 }
                 phoneFrame.contactBox.grabFocus();
             }
 
             private String getButton(JButton source) {
-                String result="";
-                if(source==phoneFrame.oneButton) {
-                    result="1";
-                } else if(source==phoneFrame.twoButton) {
-                    result="2";
-                } else if(source==phoneFrame.threeButton) {
-                    result="3";
-                } else if(source==phoneFrame.fourButton) {
-                    result="4";
-                } else if(source==phoneFrame.fiveButton) {
-                    result="5";
-                } else if(source==phoneFrame.sixButton) {
-                    result="6";
-                } else if(source==phoneFrame.sevenButton) {
-                    result="7";
-                } else if(source==phoneFrame.eightButton) {
-                    result="8";
-                } else if(source==phoneFrame.nineButton) {
-                    result="9";
-                } else if(source==phoneFrame.starButton) {
-                    result="*";
-                } else if(source==phoneFrame.zeroButton) {
-                    result="0";
-                } else if(source==phoneFrame.hashButton) {
-                    result="#";
+                String result = "";
+                if (source == phoneFrame.oneButton) {
+                    result = "1";
+                } else if (source == phoneFrame.twoButton) {
+                    result = "2";
+                } else if (source == phoneFrame.threeButton) {
+                    result = "3";
+                } else if (source == phoneFrame.fourButton) {
+                    result = "4";
+                } else if (source == phoneFrame.fiveButton) {
+                    result = "5";
+                } else if (source == phoneFrame.sixButton) {
+                    result = "6";
+                } else if (source == phoneFrame.sevenButton) {
+                    result = "7";
+                } else if (source == phoneFrame.eightButton) {
+                    result = "8";
+                } else if (source == phoneFrame.nineButton) {
+                    result = "9";
+                } else if (source == phoneFrame.starButton) {
+                    result = "*";
+                } else if (source == phoneFrame.zeroButton) {
+                    result = "0";
+                } else if (source == phoneFrame.hashButton) {
+                    result = "#";
                 }
                 return result;
             }
-	};
+        };
 
         phoneFrame.oneButton.addMouseListener(mouseListener);
         phoneFrame.twoButton.addMouseListener(mouseListener);
@@ -1016,24 +1027,25 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
         phoneFrame.zeroButton.addMouseListener(mouseListener);
         phoneFrame.hashButton.addMouseListener(mouseListener);
 
-        KeyAdapter keyListener = new KeyAdapter() {
+        KeyAdapter keyListener = new KeyAdapter()   {
+
             public void keyPressed(KeyEvent event) {
-                if(event.getKeyChar()!=KeyEvent.VK_ENTER) {
-                    Character c=new Character(event.getKeyChar());
-                    if(Character.isLetterOrDigit(c.charValue()) || c.toString().equals("#") || c.toString().equals("*")) {
-                        if(startDtmf(c.toString())) {
+                if (event.getKeyChar() != KeyEvent.VK_ENTER) {
+                    Character c = new Character(event.getKeyChar());
+                    if (Character.isLetterOrDigit(c.charValue()) || c.toString().equals("#") || c.toString().equals("*")) {
+                        if (startDtmf(c.toString())) {
                         }
                     }
                 }
             }
 
             public void keyReleased(KeyEvent event) {
-                if(event.getKeyChar()==KeyEvent.VK_ENTER) {
+                if (event.getKeyChar() == KeyEvent.VK_ENTER) {
                     dialButton_actionPerformed(event);
                 } else {
-                    Character c=new Character(event.getKeyChar());
-                    if(Character.isLetterOrDigit(c.charValue()) || c.toString().equals("#") || c.toString().equals("*")) {
-                        if(stopDtmf(c.toString())) {
+                    Character c = new Character(event.getKeyChar());
+                    if (Character.isLetterOrDigit(c.charValue()) || c.toString().equals("#") || c.toString().equals("*")) {
+                        if (stopDtmf(c.toString())) {
                         }
                     }
                 }
@@ -1041,12 +1053,12 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
 
             public void keyTyped(KeyEvent event) {
                 // if we have a connection the ignore the key (do not want DTMF to display)
-                int selectedRow=phoneFrame.getSelectedLine();
+                int selectedRow = phoneFrame.getSelectedLine();
                 if (selectedRow < 0 || selectedRow > interlocutors.getRowCount() - 1) {
                     return;
                 }
                 InterlocutorUI inter = interlocutors.getInterlocutorAt(selectedRow);
-                if(inter==null) {
+                if (inter == null) {
                     return;
                 }
                 event.consume();
@@ -1055,20 +1067,21 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
 
         phoneFrame.contactBox.addKeyListener(keyListener);
 
-        ActionListener lineListener = new ActionListener() {
+        ActionListener lineListener = new ActionListener()   {
+
             public void actionPerformed(ActionEvent evt) {
-                JButton button=(JButton)(evt.getSource());
-                if(button==phoneFrame.lineOneButton) {
-                    if(phoneFrame.getSelectedLine()!=0) {
-                        phoneFrame.setLineSelected(phoneFrame.getSelectedLine(),false);
-                        phoneFrame.setLineSelected(0,true);
-                        if(interlocutors.getInterlocutorAt(0)!=null) {
-                            phoneFrame.contactBox.setText(interlocutors.getValueAt(0,1).toString());
-                            phoneFrame.contactBox.setToolTipText(interlocutors.getValueAt(0,1).toString());
-                            if("FAILED".equals(interlocutors.getValueAt(0,2).toString())) {
-                                phoneFrame.callStatus.setText(interlocutors.getValueAt(0,2).toString()+": "+interlocutors.getValueAt(0,3).toString());
+                JButton button = (JButton) (evt.getSource());
+                if (button == phoneFrame.lineOneButton) {
+                    if (phoneFrame.getSelectedLine() != 0) {
+                        phoneFrame.setLineSelected(phoneFrame.getSelectedLine(), false);
+                        phoneFrame.setLineSelected(0, true);
+                        if (interlocutors.getInterlocutorAt(0) != null) {
+                            phoneFrame.contactBox.setText(interlocutors.getValueAt(0, 1).toString());
+                            phoneFrame.contactBox.setToolTipText(interlocutors.getValueAt(0, 1).toString());
+                            if ("FAILED".equals(interlocutors.getValueAt(0, 2).toString())) {
+                                phoneFrame.callStatus.setText(interlocutors.getValueAt(0, 2).toString() + ": " + interlocutors.getValueAt(0, 3).toString());
                             } else {
-                                phoneFrame.callStatus.setText(interlocutors.getValueAt(0,2).toString());
+                                phoneFrame.callStatus.setText(interlocutors.getValueAt(0, 2).toString());
                             }
                         } else {
                             phoneFrame.contactBox.setText("");
@@ -1076,17 +1089,17 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
                             phoneFrame.callStatus.setText("");
                         }
                     }
-                } else if(button==phoneFrame.lineTwoButton) {
-                    if(phoneFrame.getSelectedLine()!=1) {
-                        phoneFrame.setLineSelected(phoneFrame.getSelectedLine(),false);
-                        phoneFrame.setLineSelected(1,true);
-                        if(interlocutors.getInterlocutorAt(1)!=null) {
-                            phoneFrame.contactBox.setText(interlocutors.getValueAt(1,1).toString());
-                            phoneFrame.contactBox.setToolTipText(interlocutors.getValueAt(1,1).toString());
-                            if("FAILED".equals(interlocutors.getValueAt(0,2).toString())) {
-                                phoneFrame.callStatus.setText(interlocutors.getValueAt(1,2).toString()+": "+interlocutors.getValueAt(1,3).toString());
+                } else if (button == phoneFrame.lineTwoButton) {
+                    if (phoneFrame.getSelectedLine() != 1) {
+                        phoneFrame.setLineSelected(phoneFrame.getSelectedLine(), false);
+                        phoneFrame.setLineSelected(1, true);
+                        if (interlocutors.getInterlocutorAt(1) != null) {
+                            phoneFrame.contactBox.setText(interlocutors.getValueAt(1, 1).toString());
+                            phoneFrame.contactBox.setToolTipText(interlocutors.getValueAt(1, 1).toString());
+                            if ("FAILED".equals(interlocutors.getValueAt(0, 2).toString())) {
+                                phoneFrame.callStatus.setText(interlocutors.getValueAt(1, 2).toString() + ": " + interlocutors.getValueAt(1, 3).toString());
                             } else {
-                                phoneFrame.callStatus.setText(interlocutors.getValueAt(1,2).toString());
+                                phoneFrame.callStatus.setText(interlocutors.getValueAt(1, 2).toString());
                             }
                         } else {
                             phoneFrame.contactBox.setText("");
@@ -1094,17 +1107,17 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
                             phoneFrame.callStatus.setText("");
                         }
                     }
-                } else if(button==phoneFrame.lineThreeButton) {
-                    if(phoneFrame.getSelectedLine()!=2) {
-                        phoneFrame.setLineSelected(phoneFrame.getSelectedLine(),false);
-                        phoneFrame.setLineSelected(2,true);
-                        if(interlocutors.getInterlocutorAt(2)!=null) {
-                            phoneFrame.contactBox.setText(interlocutors.getValueAt(2,1).toString());
-                            phoneFrame.contactBox.setToolTipText(interlocutors.getValueAt(2,1).toString());
-                            if("FAILED".equals(interlocutors.getValueAt(0,2).toString())) {
-                                phoneFrame.callStatus.setText(interlocutors.getValueAt(2,2).toString()+": "+interlocutors.getValueAt(2,3).toString());
+                } else if (button == phoneFrame.lineThreeButton) {
+                    if (phoneFrame.getSelectedLine() != 2) {
+                        phoneFrame.setLineSelected(phoneFrame.getSelectedLine(), false);
+                        phoneFrame.setLineSelected(2, true);
+                        if (interlocutors.getInterlocutorAt(2) != null) {
+                            phoneFrame.contactBox.setText(interlocutors.getValueAt(2, 1).toString());
+                            phoneFrame.contactBox.setToolTipText(interlocutors.getValueAt(2, 1).toString());
+                            if ("FAILED".equals(interlocutors.getValueAt(0, 2).toString())) {
+                                phoneFrame.callStatus.setText(interlocutors.getValueAt(2, 2).toString() + ": " + interlocutors.getValueAt(2, 3).toString());
                             } else {
-                                phoneFrame.callStatus.setText(interlocutors.getValueAt(2,2).toString());
+                                phoneFrame.callStatus.setText(interlocutors.getValueAt(2, 2).toString());
                             }
                         } else {
                             phoneFrame.contactBox.setText("");
@@ -1112,17 +1125,17 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
                             phoneFrame.callStatus.setText("");
                         }
                     }
-                } else if(button==phoneFrame.lineFourButton) {
-                    if(phoneFrame.getSelectedLine()!=3) {
-                        phoneFrame.setLineSelected(phoneFrame.getSelectedLine(),false);
-                        phoneFrame.setLineSelected(3,true);
-                        if(interlocutors.getInterlocutorAt(3)!=null) {
-                            phoneFrame.contactBox.setText(interlocutors.getValueAt(3,1).toString());
-                            phoneFrame.contactBox.setToolTipText(interlocutors.getValueAt(3,1).toString());
-                            if("FAILED".equals(interlocutors.getValueAt(0,2).toString())) {
-                                phoneFrame.callStatus.setText(interlocutors.getValueAt(3,2).toString()+": "+interlocutors.getValueAt(3,3).toString());
+                } else if (button == phoneFrame.lineFourButton) {
+                    if (phoneFrame.getSelectedLine() != 3) {
+                        phoneFrame.setLineSelected(phoneFrame.getSelectedLine(), false);
+                        phoneFrame.setLineSelected(3, true);
+                        if (interlocutors.getInterlocutorAt(3) != null) {
+                            phoneFrame.contactBox.setText(interlocutors.getValueAt(3, 1).toString());
+                            phoneFrame.contactBox.setToolTipText(interlocutors.getValueAt(3, 1).toString());
+                            if ("FAILED".equals(interlocutors.getValueAt(0, 2).toString())) {
+                                phoneFrame.callStatus.setText(interlocutors.getValueAt(3, 2).toString() + ": " + interlocutors.getValueAt(3, 3).toString());
                             } else {
-                                phoneFrame.callStatus.setText(interlocutors.getValueAt(3,2).toString());
+                                phoneFrame.callStatus.setText(interlocutors.getValueAt(3, 2).toString());
                             }
                         } else {
                             phoneFrame.contactBox.setText("");
@@ -1140,76 +1153,75 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
         phoneFrame.lineThreeButton.addActionListener(lineListener);
         phoneFrame.lineFourButton.addActionListener(lineListener);
 
-        phoneFrame.answerButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt)
-            {
+        phoneFrame.answerButton.addActionListener(new ActionListener()   {
+
+            public void actionPerformed(ActionEvent evt) {
                 answerButton_actionPerformed(evt);
             }
         });
-        phoneFrame.hangupButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt)
-            {
+        phoneFrame.hangupButton.addActionListener(new ActionListener()   {
+
+            public void actionPerformed(ActionEvent evt) {
                 hangupButton_actionPerformed(evt);
             }
         });
 
-        phoneFrame.muteButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt)
-            {
+        phoneFrame.muteButton.addActionListener(new ActionListener()   {
+
+            public void actionPerformed(ActionEvent evt) {
                 muteButton_actionPerformed(evt);
             }
         });
 
-        phoneFrame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent evt)
-            {
+        phoneFrame.addWindowListener(new WindowAdapter()   {
+
+            public void windowClosing(WindowEvent evt) {
                 fireExitRequest();
             }
         });
         configFrame.saveButton.addActionListener(new ActionListener()
-        {
-            public void actionPerformed(ActionEvent evt)
-            {
+          {
+
+            public void actionPerformed(ActionEvent evt) {
                 configFrame_savePerformed(evt);
             }
         });
     }
 
     public void requestAuthentication(String realm,
-                                      String userName,
-                                      String authenticationUserName,
-                                      char[] password)
-    {
-        if (authenticationSplash != null)
+            String userName,
+            String authenticationUserName,
+            char[] password) {
+        if (authenticationSplash != null) {
             authenticationSplash.dispose();
+        }
         authenticationSplash = new AuthenticationSplash(phoneFrame, true);
-        if(userName != null) {
+        if (userName != null) {
             authenticationSplash.userNameTextField.setText(userName);
-	}
-        if(authenticationUserName != null) {
+        }
+        if (authenticationUserName != null) {
             authenticationSplash.authenticationUserNameTextField.setText(authenticationUserName);
-	}
-        if(password != null)
+        }
+        if (password != null) {
             authenticationSplash.passwordTextField.setText(new String(password));
+        }
         //Set a relevant realm value
         //Bug report by Steven Lass (sltemp at comcast.net)
-        if(realm != null)
+        if (realm != null) {
             authenticationSplash.realmValueLabel.setText(new String(realm));
+        }
         authenticationSplash.setVisible(true);
     }
 
-    public String getUserName()
-    {
+    public String getUserName() {
         return authenticationSplash.userName;
     }
 
-    public String getAuthenticationUserName()
-    {
+    public String getAuthenticationUserName() {
         return authenticationSplash.authenticationUserName;
     }
 
-    public char[] getAuthenticationPassword()
-    {
+    public char[] getAuthenticationPassword() {
         return authenticationSplash.password;
     }
 
@@ -1217,7 +1229,7 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     public void windowClosed(WindowEvent e) {
-	System.out.println("Softphone is hidden");
+        System.out.println("Softphone is hidden");
         phoneFrame.setVisible(false);
     }
 
@@ -1239,12 +1251,12 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     public void showLineTest(MediaManager mediaManager) {
         if (lineTestConfig != null) {
             lineTestConfig.setVisible(true);
-	    lineTestConfig.refreshDevices();
+            lineTestConfig.refreshDevices();
         } else {
             lineTestConfig = new LineTestConfig(mediaManager);
-            lineTestConfig.addComponentListener(new ComponentAdapter() {
+            lineTestConfig.addComponentListener(new ComponentAdapter()   {
+
                 public void componentHidden(ComponentEvent e) {
-                    
                 }
             });
         }
@@ -1255,13 +1267,11 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
             networkInterfaceConfig.setVisible(true);
         } else {
             networkInterfaceConfig = new NetworkInterfaceConfig();
-            networkInterfaceConfig.addComponentListener(new ComponentAdapter() {
-                public void componentHidden(ComponentEvent e) {
+            networkInterfaceConfig.addComponentListener(new ComponentAdapter()   {
 
+                public void componentHidden(ComponentEvent e) {
                 }
             });
         }
     }
-
-
 }
