@@ -1,102 +1,134 @@
+=== JVoiceBridge ===
+Contributors: Damir Kusar
+Donate link: http://www.kusar.ch/
+Tags: V0.1
+Tested up to: V0.1
+Stable tag: V0.1
 
-jVoiceBridge README
--------------------
+This is a fork of the original JVoiceBridge. The original can be found on the Website: http://java.net/projects/jvoicebridge/ 
+You can download it directly with subversion: svn checkout https://svn.java.net/svn/jvoicebridge~svn 
 
-ABOUT jVoiceBridge
+This fork should solve some problem with the audio communication between Softphone and the Bridge. 
 
-jVoiceBridge is a Java-based software conference bridge.  It uses the SIP and RTP protocols to send signaling and audio data, respectively.  It is designed to be highly reliable and scalable, while still providing advanced features such as high-fidelity, stereo audio and individual mixes. 
+This project is currently my bachelor work and after that, the JVoiceBridge should be more usable for the my school (Lucerne University of Applied Sciences and Arts).
+The exactly problems can be read in chapter 1.
 
-jVoiceBridge is currently used in a variety of applications, including conference calling and 3D virtual worlds.  Since the voice bridge is based on the SIP standard, it interoperates with existing SIP components such as software phones, and VoIP to PSTN gateways.  The jVoiceBridge package also includes a Java-based software phone which is optimized to work with the bridge.
+I used the jp branch and created a new branch called ku5ard
 
-WHAT IS INCLUDED
-
-This package includes the source for the jVoiceBridge distribution.  jVoiceBridge consists of two main parts: the voice bridge and the softphone.  
-
-The voice bridge is a server application which mixes audio for a variety of uses.  The softphone is a client-side Java application that can be used to connect to the voice bridge in high-fidelity stereo.  While the voice bridge and softphone are optimized to work together, any SIP-based software phone should work with the voice bridge.
-
-BUILDING THE SOFTWARE
-
-Building jVoiceBridge requires the followings software:
-
-Java SE, version 1.5 or later
-Apache Ant, version 1.6.5 or later
-
-To build the voice bridge and softphone, expand the source bundle into a directory, which we will refer to as "<bridge_dir>".  <bridge_dir> contains the top-level and files, as well as the following directories:
-
-<bridge_dir>/common:    shared libraries and code
-<bridge_dir>/stun:      implementation of RFC 3489
-<bridge_dir>/voip:      voice bridge
-<bridge_dir>/softphone: software phone implementation
-
-Each of these directories contains an independent sub-project, with separate build scripts.
-
-To compile a distribution, from <bridge_dir>, run the command:
-
-$ ant dist
-
-This will create a distribution bundle in the directory <bridge_dir>/dist.  This should include the softphone, bridge and doc directories.
-
-The <bridge_dir>/dist/softphone directory contains the standalone softphone.jar file. This jar includes all classes and data needed to run the softphone.
-
-The <bridge_dir>/dist/bridge directory contains all the jar files needed to run the bridge, and a run.xml file which can be used with ant to launch the bridge.
-
-the <bridge_dir>/dist/doc directory contains documentation.
+== Contens ==
+0. Credits
+1. Problem description
+2. Changelog
+3. Download
+4. Build and Run
+5. FAQ
 
 
-RUNNING THE VOICE BRIDGE
+== 0. Credits ==
+Special thanks go out the the following:
 
-To run the voice bridge, from <bridge_dir> run:
+Roman Speck (My Bachelor team partner)
 
-$ ant run-bridge
+== 1. Problem description ==
+The problems are, that in some environment, the audio communication does not work. The establishment of the communication over SIP was in the tests never a problem. Only that the RTP packets can not be received on the client side. 
 
-   ** NOTE (Mac OS X only):
-   If you're running the JDK 1.6 Developer Preview release, you'll need to comment out the following lines from 
-   <bridge_dir>/dist/bridge/run.xml:
+Scenario 1 problem: The RTP communication does not work from home to the OpenWonderland-Server in our School.
+The server is on virtual.enterpriselab.ch or 147.88.212.133
 
-            <!--jvmarg value="-XX:+UseParNewGC"/-->
-            <!--jvmarg value="-XX:+UseConcMarkSweepGC"/-->
+Scenario 2 problem: The RTP communication does not work in a test environment in which the client is behind a NAT and the Server has a public IP.
 
-This will start up the voice bridge on the local host, port 5060.  To change the port the bridge runs on, you can create a file called "my.build.properties" in <bridge_dir> and add the following line:
+Scenario 3 problem: The RTP communication does not work in the school network because the the network communication is a little bit complicated, but i do not have the rights to explain the school architecture here.
 
-bridge.sip.port=xxx
+These 3 Scenarios are given at this moment and i will try to solve this. :) 
 
-Once the bridge is running, you should be able to telnet to the bridge control port (port 6666) and type "help" to see a list of bridge commands.
+if somebody has another environment, please contact me, maybe i will have time to check this scenario also.
 
-RUNNING THE SOFTPHONE
 
-To run the softphone, from <bridge_dir> run:
+== 2. Changelog ==
+The following Versions are for me intern, thats not the original versioning of the JVoiceBridge.
 
-$ ant run-softphone
+Version 0.1 = 
+In this Version, there was added the Handler class in the stun folder. 
+Changes in common folder: 
+in the SdpManager.java and RtpSocket.java class were the Sockets set from the Handler class. 
 
-This will launch the softphone.  
+Changes in sofphone folder: 
+in the SipManager.java was the WAN socket and the public socket set. 
+in the SipCommunicator.java was an if/else added to check if an argument for mediaport was given at the startup of softphone.
+in the NewPhoneFrame.java and NewGuiManager.java was the wanCheckbox created, setup and placed. when this checkbox is selected, there are using another way to find out the public ip (in this case called WAN ip). This is useful for private users in the home network.
+in the MediaManager there is an if/else to check if the wanCheckbox is selected or not to generate the SDP with the WAN socket or with the normal socket.
+The SDP port is not anymore created randomly, it uses now the also the mediaport. this is necessary because now the client sends the RTP packets from the mediaport and will communicate the same port to the bridge to receive the packets on this port. before the changes, the client communicated a randomly generated port. So there is a reduction of the ports :) to setup easier firewalls.
 
-By default, the softphone does not have a SIP registrar set, so will not register properly.  Generally, it is a good idea to use the voice bridge as a SIP registrar.  You can do this selecting Settings in the softphone menu, then
-Configure, click on sip in the Configuration window, scroll down to
-Registrar address and enter <registrar IP address>;sip-stun:<registrar port>
-Click Save, Close, then restart the softphone.
+All changes are marked with the author name: Damir Kusar and Version 0.2.
 
-When the softphone registers correctly, you will see the current registered address in green at the bottom of the softphone.  You can mouse over the address to see the full version.  When placing calls to the softphone, use this address.
 
-CONTROLLING THE VOICE BRIDGE
+== 3. Download ==
+You can download it via the website: https://github.com/damirkusar/jvoicebridge
+and feel free to fork it
 
-The voice bridge can be remotely controlled using the bridge control port, by default port 6666.  From a standard client, you should be able to telnet to this port and get information and send commands to the bridge.
 
-A full description of the commands for the bridge does not currently exist, but there is a Java API to access the most common functionality.  Note that these APIs do not cover all the features of the bridge.
+== 4. Build and Run ==
+There is a build scripts in the directory called buildall.sh.
+To run the Bridge or the Softphone you must be in the jp folder.
 
-The voice bridge API is in the com.sun.voip.client.connector package in the voip directory.  This package is built into the bridge_connector.jar file, which is available in <bridge_dir>/dist/bridge.
+Before you run, (after building), please check that you have setup the build.properties file for the softphone and the voip/run.properties file for the bridge. Here is a sample of each file.
 
-JavaDoc for the bridge API is available in the <bridge_dir>/dist/doc/connector directory.  There is a sample program that places calls using the bridge connector API in the <bridge_dir>/dist/doc/example directory, called PlaceCall.java.
 
-To build the PlaceCall example, use a command like:
+= build.properties =
+### well-known directories
+common.dir=${top.dir}/common
+stun.dir=${top.dir}/stun
+bridge.dir=${top.dir}/voip
+softphone.dir=${top.dir}/softphone
+dist.dir=${top.dir}/dist
+voicelib.dir=${top.dir}/voicelib
+bridgemonitor.dir=${top.dir}/bridgemonitor
 
-$ javac -cp ../../bridge/bridge_connector.jar PlaceCall.java
+### bridge settings
+#bridge.hostname=${voicebridge.local.hostAddress}
+bridge.hostname=147.88.212.133
+bridge.sip.port=5060
 
-To run it, use:
+### softphone settings
+softphone.registrar=${bridge.hostname};sip-stun:${bridge.sip.port}
 
-$ java -cp ../../bridge/bridge_connector.jar:. PlaceCall
+#softphone.username=${user.name}
+softphone.username=ku5ard
 
-This will place a call to the given SIP address from the given bridge.  For example, if your softphone has the address "sip:test@192.168.0.1:5062", you can place a call to that phone with:
+#softphone.mediaport=10000 #this is the port to send the RTP packets from client. must be activated in the build.xml file.
+#softphone.localipaddress=192.168.2.90 #sets the local ipaddress if the sofphone makes trouble with finding the correct one. must be activated in the build.xml file.
 
-$ java PlaceCall localhost 6666 testConf sip:test@192.168.0.1:5062
 
-This will create a conference called "testConf" and place a call to the softphone.  If you call another phone with the same conference name, the two parties will be able to talk to each other. 
+= voip/run.properties =
+voicebridge.sip.port=5060
+voicebridge.control.port=6666
+voicebridge.local.hostAddress=147.88.212.133
+voicebridge.server.public.address=${voicebridge.local.hostAddress}
+voicebridge.server.public.control.port=${voicebridge.control.port}
+voicebridge.server.public.sip.port=${voicebridge.sip.port}
+voicebridge.first.rtp.port=10000
+voicebridge.last.rtp.port=10200
+voicebridge.status.listeners=
+voicebridge.sip.gateways=
+voicebridge.sip.proxy=
+voicebridge.localhost.security=false
+voicebridge.outside.line.prefix=9
+voicebridge.long.distance.prefix=1
+voicebridge.international.prefix=011
+voicebridge.status.listeners=${voicebridge.local.hostAddress}:6668
+voicebridge.lone.receiver.port=0
+voicebridge.sound.path=/com/sun/voip/server/sounds:.
+voicebridge.sound.cache.path=./audiocache
+voicebridge.network.audio.buffer.size=
+
+
+== 5. FAQ ==
+Q: How can i test my changes in Open Wonderland?
+A: After the ant dist in the root folder of the project, it creates a dist folder. The following files has to be replaced in Open Wonderlan.
+
+voicebridge-dist.zip -> wonderland/modules/tools/voicebridge/lib/zip/
+voicelib/voicelib.jar -> wonderland/modules/tools/audio-manager/lib/
+softphone/softphone.jar -> wonderland/core/ext/softphone/softphone.jar
+
+Q:
+A:
