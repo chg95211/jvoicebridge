@@ -117,7 +117,7 @@ class NewPhoneFrame
     JLabel callStatus = new JLabel();
     /**
      * @author: Damir Kusar
-     * @version: 0.2
+     * @version: 0.1
      * Added following line to initiate a new JCheckBox.
      */
     JCheckBox wanCheckbox = new JCheckBox();
@@ -162,7 +162,7 @@ class NewPhoneFrame
 
         /**
          * @author: Damir Kusar
-         * @version: 0.2
+         * @version: 0.1
          * Added following lines to setup the checkbox.
          */
         wanCheckbox.setEnabled(true);
@@ -241,8 +241,8 @@ class NewPhoneFrame
         dialPanel.add(dialButton);
 
         /**
-         * @author: Damir Kusar
-         * @version: 0.2
+         * @author: Damir Kusar, Roman Speck
+         * @version: 0.1
          * Added following lines to setup the checkboxes position and place it in the panel.
          */
         wanCheckbox.setBounds(290, 16, 10, 10);

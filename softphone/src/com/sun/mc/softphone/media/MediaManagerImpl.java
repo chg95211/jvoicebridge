@@ -79,7 +79,7 @@ import com.sun.mc.softphone.common.*;
 import com.sun.mc.softphone.gui.NewGuiManager;
 
 import com.sun.mc.softphone.sip.SipManager;
-import com.sun.stun.Handler;
+import com.sun.stun.SocketHandler;
 
 import java.io.InputStreamReader;
 
@@ -1166,17 +1166,19 @@ public class MediaManagerImpl implements MediaManager, MicrophoneListener, Speak
         Logger.println("generateSdp:  Our isa " + isa + " callee " + callee);
 
         /**
-         * @author: Damir Kusar
-         * @version: 0.2
+         * @author: Damir Kusar, Roman Speck
+         * @version: 0.1
          * Added following line to check if the checkbox is selected in the softphone gui or not.
          * If the checkbox is selected, the code selects the Wan IP to communicate with the Bridge.
          */
         String ourSdp = null;
         if (NewGuiManager.isWanCheckboxSelected()) {
-            ourSdp = sdpManager.generateSdp(sipCommunicator.getUserName(), new InetSocketAddress(Handler.getWanIP(), Handler.getWanPort()));
+            ourSdp = sdpManager.generateSdp(sipCommunicator.getUserName(), new InetSocketAddress(SocketHandler.getWanIP(), SocketHandler.getWanPort()));
         } else {
-            ourSdp = sdpManager.generateSdp(sipCommunicator.getUserName(), new InetSocketAddress(isa.getAddress(), Handler.getLocalPort()));
+            ourSdp = sdpManager.generateSdp(sipCommunicator.getUserName(), new InetSocketAddress(isa.getAddress(), isa.getPort()));
         }
+//        
+//        
 
 
 

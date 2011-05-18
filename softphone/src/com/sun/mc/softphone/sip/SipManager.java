@@ -71,7 +71,7 @@ import com.sun.mc.softphone.common.*;
 import com.sun.mc.softphone.media.MediaManager;
 import com.sun.mc.softphone.sip.event.*;
 import com.sun.mc.softphone.sip.security.*;
-import com.sun.stun.Handler;
+import com.sun.stun.SocketHandler;
 
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -408,12 +408,12 @@ public class SipManager
 
 
                         /**
-                         * @author: Damir Kusar
-                         * @version: 0.2
+                         * @author: Damir Kusar, Roman Speck
+                         * @version: 0.1
                          * Added following two lines to set the Wan and Public Socket in the Handler class.
                          */
-                        Handler.setWanSocket(Handler.findWanIP(), Handler.getLocalPort());
-                        Handler.setPublicSocket(publicIsa.getAddress(), publicIsa.getPort());
+                        SocketHandler.setWanSocket(SocketHandler.findWanIP(), SocketHandler.getLocalPort());
+                        SocketHandler.setPublicSocket(publicIsa.getAddress(), publicIsa.getPort());
 
 
                     } catch (InvalidArgumentException ex) {

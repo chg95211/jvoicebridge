@@ -1,5 +1,5 @@
 === JVoiceBridge ===
-Contributors: Damir Kusar
+Contributors: Damir Kusar, Roman Speck
 Donate link: http://www.kusar.ch/
 Tags: V0.1
 Tested up to: V0.1
@@ -59,7 +59,7 @@ in the NewPhoneFrame.java and NewGuiManager.java was the wanCheckbox created, se
 in the MediaManager there is an if/else to check if the wanCheckbox is selected or not to generate the SDP with the WAN socket or with the normal socket.
 The SDP port is not anymore created randomly, it uses now the also the mediaport. this is necessary because now the client sends the RTP packets from the mediaport and will communicate the same port to the bridge to receive the packets on this port. before the changes, the client communicated a randomly generated port. So there is a reduction of the ports :) to setup easier firewalls.
 
-All changes are marked with the author name: Damir Kusar and Version 0.2.
+All changes are marked with the author name: Damir Kusar and Version 0.1.
 
 
 == 3. Download ==

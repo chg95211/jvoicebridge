@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author damirkusar
  */
-public class Handler {
+public class SocketHandler {
 
     private static InetAddress publicIP = null;
     private static int publicPort = -29;

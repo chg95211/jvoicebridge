@@ -1239,8 +1239,8 @@ public class SipCommunicator extends Thread implements
                 System.setProperty("com.sun.mc.stun.LOCAL_IP_ADDRESS",
                         args[i]);
             } /**
-             * @author: Damir Kusar
-             * @version: 0.2
+             * @author: Damir Kusar, Roman Speck
+             * @version: 0.1
              * Added following lines to check if there is a paramter for mediaport and sets it.
              */
             else if (args[i].equalsIgnoreCase("-mediaport") && i < args.length - 1) {

@@ -22,7 +22,7 @@
  */
 package com.sun.voip;
 
-import com.sun.stun.Handler;
+import com.sun.stun.SocketHandler;
 import java.net.DatagramSocket;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -140,11 +140,11 @@ public class RtpSocket {
         }
 
         /**
-         * @author: Damir Kusar
-         * @version: 0.2
+         * @author: Damir Kusar, Roman Speck
+         * @version: 0.1
          * Added following line to set the local socket in the Handler class.
          */
-        Handler.setLocalSocket(rtpDatagramSocket.getLocalAddress(), rtpDatagramSocket.getLocalPort());
+        SocketHandler.setLocalSocket(rtpDatagramSocket.getLocalAddress(), rtpDatagramSocket.getLocalPort());
 
         if (p != port) {
             System.out.println("RtpSocket:  Desired port " + port

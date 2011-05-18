@@ -22,7 +22,7 @@
  */
 package com.sun.voip;
 
-import com.sun.stun.Handler;
+import com.sun.stun.SocketHandler;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -240,25 +240,25 @@ public class SdpManager {
 
     public String generateSdp(String name, String host, int port) {
         /**
-         * @author: Damir Kusar
-         * @version: 0.2
+         * @author: Damir Kusar, Roman Speck
+         * @version: 0.1
          * Added following lines to set the Sdp Socket in the Handler class.
          */
         try {
-            Handler.setSdpSocket(InetAddress.getByName(host), port);
+            SocketHandler.setSdpSocket(InetAddress.getByName(host), port);
         } catch (UnknownHostException ex) {
             Logger.println("SdpManger.java - Cannot set SDP Socket in Handler class: " + ex.getMessage());
         }
 
-        System.out.println("XXX_RTP_SdManager.java_1 - public getAddress: " + Handler.getPublicIP());
-        System.out.println("XXX_RTP_SdManager.java_2 - public getPort: " + Handler.getPublicPort());
-        System.out.println("XXX_RTP_SdManager.java_Special 3 - local getAddress: " + Handler.getLocalIP());
-        System.out.println("XXX_RTP_SdManager.java_Special 4 - local getPort: " + Handler.getLocalPort());
-        System.out.println("XXX_RTP_SdManager.java_Special 5 - sdp getAddress: " + Handler.getSdpIP());
-        System.out.println("XXX_RTP_SdManager.java_Special 6 - sdp getPort: " + Handler.getSdpPort());
+        System.out.println("XXX_RTP_SdManager.java_1 - public getAddress: " + SocketHandler.getPublicIP());
+        System.out.println("XXX_RTP_SdManager.java_2 - public getPort: " + SocketHandler.getPublicPort());
+        System.out.println("XXX_RTP_SdManager.java_Special 3 - local getAddress: " + SocketHandler.getLocalIP());
+        System.out.println("XXX_RTP_SdManager.java_Special 4 - local getPort: " + SocketHandler.getLocalPort());
+        System.out.println("XXX_RTP_SdManager.java_Special 5 - sdp getAddress: " + SocketHandler.getSdpIP());
+        System.out.println("XXX_RTP_SdManager.java_Special 6 - sdp getPort: " + SocketHandler.getSdpPort());
         System.out.println("XXX_RTP_SdManager.java_Special 7 - host address: " + host);
-        System.out.println("XXX_RTP_SdManager.java_Special 8 - wan getAddress: " + Handler.getWanIP());
-        System.out.println("XXX_RTP_SdManager.java_Special 9 - wan getPort: " + Handler.getWanPort());
+        System.out.println("XXX_RTP_SdManager.java_Special 8 - wan getAddress: " + SocketHandler.getWanIP());
+        System.out.println("XXX_RTP_SdManager.java_Special 9 - wan getPort: " + SocketHandler.getWanPort());
 
         String sdp =
                 "v=0\r\n"

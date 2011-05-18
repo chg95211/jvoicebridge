@@ -173,8 +173,8 @@ public class NewGuiManager implements GuiManagerUI, GuiCallback,
     }
 
     /**
-     * @author: Damir Kusar
-     * @version: 0.2
+     * @author: Damir Kusar, Roman Speck
+     * @version: 0.1
      * This method returns the boolean if the wanCheckBox is selected or not.
      * @return boolean. Is the wanCheckbox selected or not.
      */
