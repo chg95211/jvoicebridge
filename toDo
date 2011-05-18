@@ -1,0 +1,14 @@
+jstun
+de.javav.jstun.test.demo
+stunserverimpl.java:
+ - removed secondary socket + abhängikeiten
+ - Sigleton erstellt
+ 
+ StunServer interface von Jvoicebridge in test.demo integriert
+ Stunserverimpl implements dieses interface
+ 
+ 
+
+
+
+
