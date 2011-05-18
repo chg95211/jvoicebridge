@@ -1,9 +1,9 @@
 === JVoiceBridge ===
 Contributors: Damir Kusar, Roman Speck
 Donate link: http://www.kusar.ch/
-Tags: V0.1
-Tested up to: V0.1
-Stable tag: V0.1
+Tags: V0.0
+Tested up to: V0.0
+Stable tag: V0.0
 
 This is a fork of the original JVoiceBridge. The original can be found on the Website: http://java.net/projects/jvoicebridge/ 
 You can download it directly with subversion: svn checkout https://svn.java.net/svn/jvoicebridge~svn 
