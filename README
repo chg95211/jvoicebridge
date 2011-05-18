@@ -110,6 +110,44 @@ voicebridge.sound.path=/com/sun/voip/server/sounds:.
 voicebridge.sound.cache.path=./audiocache
 voicebridge.network.audio.buffer.size=
 
+= voip/buildall.sh =
+read -p "Start Buildprocess"
+
+#read -p "Delete dist folder"
+rm -r dist/
+
+#read -p "Delete tmp folder"
+rm -r tmp/
+
+#read -p "Build Stun"
+cd stun/
+ant
+
+#read -p "Build Common"
+cd ../common/
+ant
+
+#read -p "Build Softphone"
+cd ../softphone/
+ant
+
+#read -p "Build Bridgemonitor"
+cd ../bridgemonitor/
+ant
+
+#read -p "Build Voip"
+cd ../voip/
+ant
+
+#read -p "Build Voicelib"
+cd ../voicelib/
+ant
+
+#read -p "Build Whole Project"
+cd ..
+ant dist
+
+
 
 == 5. FAQ ==
 Q: How can i test my changes in Open Wonderland?
