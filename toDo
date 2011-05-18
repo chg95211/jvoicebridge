@@ -7,7 +7,14 @@ stunserverimpl.java:
  StunServer interface von Jvoicebridge in test.demo integriert
  Stunserverimpl implements dieses interface
  
+ JvoiceBridge:
+ stunclient durch discoverytest ersetzt.
+ jvoicebridge code anpassen wo stunclient involviert ist.
  
+ alles wo bei alter jvoicebridge auf stunserverimpl verweist, alles auf neues ändern.
+ 
+ JAIN SIP:
+ Version TAG: JAIN-SIP-1-2-1 common/lib/jainsip.diffs übernommen und auf neuen stunserverimpl angepasst und discoverytest
 
 
 
